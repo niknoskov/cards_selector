@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#D9FAE0" id="theme-color">
+    <meta name="theme-color" content="#DEE0E4" id="theme-color">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Заказ карты</title>
     <style>
@@ -39,7 +39,7 @@
         }
 
         body {
-            background: rgb(217, 250, 224);
+            background: rgb(222, 224, 228);
             transition: background 0.3s ease;
         }
 
@@ -518,9 +518,9 @@
 </head>
 <body class="skin-0">
     <!-- Background gradients -->
-    <div class="background-gradient bg-skin-0" id="bg-0" style="opacity: 1;"></div>
+    <div class="background-gradient bg-skin-0" id="bg-0" style="opacity: 0;"></div>
     <div class="background-gradient bg-skin-1" id="bg-1" style="opacity: 0;"></div>
-    <div class="background-gradient bg-skin-2" id="bg-2" style="opacity: 0;"></div>
+    <div class="background-gradient bg-skin-2" id="bg-2" style="opacity: 1;"></div>
     <div class="background-gradient bg-skin-3" id="bg-3" style="opacity: 0;"></div>
     <div class="background-gradient bg-skin-4" id="bg-4" style="opacity: 0;"></div>
     <div class="background-gradient bg-sticker-0" id="bg-sticker-0" style="opacity: 0;"></div>
@@ -564,25 +564,19 @@
         <!-- One carousel for every card and sticker design -->
         <nav class="design-carousel-shell" aria-label="Дизайны карты и стикера">
             <div class="design-carousel" id="design-carousel" role="listbox" aria-orientation="horizontal" aria-label="Выберите дизайн">
-                <button class="design-option selected" type="button" role="option" aria-selected="true" aria-label="Карта, салатовый дизайн, 1 из 7" data-design-index="0" tabindex="0">
-                    <span class="design-swatch skin-0-gradient"></span>
-                </button>
-                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, мятный дизайн, 2 из 7" data-design-index="1" tabindex="-1">
-                    <span class="design-swatch skin-1-gradient"></span>
-                </button>
-                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, серебряный дизайн, 3 из 7" data-design-index="2" tabindex="-1">
+                <button class="design-option selected" type="button" role="option" aria-selected="true" aria-label="Карта, серебряный дизайн, 1 из 5" data-design-index="0" tabindex="0">
                     <span class="design-swatch skin-2-gradient"></span>
                 </button>
-                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, красный дизайн, 4 из 7" data-design-index="3" tabindex="-1">
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, красный дизайн, 2 из 5" data-design-index="1" tabindex="-1">
                     <span class="design-swatch skin-3-gradient"></span>
                 </button>
-                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, чёрный дизайн, 5 из 7" data-design-index="4" tabindex="-1">
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, чёрный дизайн, 3 из 5" data-design-index="2" tabindex="-1">
                     <span class="design-swatch skin-4-gradient"></span>
                 </button>
-                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, фиолетовый дизайн, 6 из 7" data-design-index="5" tabindex="-1">
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, фиолетовый дизайн, 4 из 5" data-design-index="3" tabindex="-1">
                     <span class="design-swatch sticker-0-gradient"></span>
                 </button>
-                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, перламутровый дизайн, 7 из 7" data-design-index="6" tabindex="-1">
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, перламутровый дизайн, 5 из 5" data-design-index="4" tabindex="-1">
                     <span class="design-swatch sticker-1-gradient"></span>
                 </button>
             </div>
@@ -612,8 +606,6 @@
         // Card skins configuration
         // cornerRadius — скругление лицевой/задней плоскости и рёбер (подложки между ними)
         const skins = [
-            { front: 'images/card_front.png', back: 'images/card_back.png', edge: [0.95, 0.45, 0.65], cornerRadius: 0.10 },
-            { front: 'images/card_front_2.png', back: 'images/card_back_2.png', edge: [0.5, 0.8, 0.75], cornerRadius: 0.10 },
             { front: 'images/Pay front.png', back: 'images/Pay back silver.png', mask: 'images/Pay mask.png', edge: [0.85, 0.85, 0.85], holographic: true, cornerRadius: 0.16 },
             { front: 'images/Pay front red.png', back: 'images/Pay back red.png', mask: 'images/Pay mask.png', edge: [0.85, 0.85, 0.85], holographic: true, cornerRadius: 0.16 },
             { front: 'images/Pay front black.png', back: 'images/Pay back black.png', mask: 'images/Pay mask.png', edge: [0.15, 0.15, 0.17], holographic: true, cornerRadius: 0.16 }
@@ -1430,9 +1422,9 @@
             toggleCardSide();
         }
         
-        const themeColors = ['#D9FAE0', '#D4F5E3', '#DEE0E4', '#F0C8C0', '#808083'];
+        const themeColors = ['#DEE0E4', '#F0C8C0', '#808083'];
         
-        const videoSkins = [2, 3, 4];
+        const videoSkins = [0, 1, 2];
 
         let currentMode = 'card'; // 'card' or 'sticker'
         let currentSticker = 0;
@@ -1443,11 +1435,9 @@
         ];
 
         const carouselItems = [
-            { mode: 'card', localIndex: 0, label: 'Карта, салатовый дизайн' },
-            { mode: 'card', localIndex: 1, label: 'Карта, мятный дизайн' },
-            { mode: 'card', localIndex: 2, label: 'Карта, серебряный дизайн' },
-            { mode: 'card', localIndex: 3, label: 'Карта, красный дизайн' },
-            { mode: 'card', localIndex: 4, label: 'Карта, чёрный дизайн' },
+            { mode: 'card', localIndex: 0, label: 'Карта, серебряный дизайн' },
+            { mode: 'card', localIndex: 1, label: 'Карта, красный дизайн' },
+            { mode: 'card', localIndex: 2, label: 'Карта, чёрный дизайн' },
             { mode: 'sticker', localIndex: 0, label: 'Стикер, фиолетовый дизайн' },
             { mode: 'sticker', localIndex: 1, label: 'Стикер, перламутровый дизайн' }
         ];
