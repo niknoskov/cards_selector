@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#D9FAE0" id="theme-color">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Заказ карты</title>
+    <style>
+        @font-face {
+            font-family: 'YSText';
+            src: url('fonts/YSText-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'YSText';
+            src: url('fonts/YSText-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+
+        :root {
+            --action-bg: rgb(46, 46, 51);
+            --action-fg: rgba(255, 255, 255, 0.98);
+            --control-radius: 16px;
+            --focus-ring: rgba(46, 46, 51, 0.88);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'YSText', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: rgb(217, 250, 224);
+            transition: background 0.3s ease;
+        }
+
+        .background-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bg-skin-0 {
+            background: radial-gradient(ellipse at 1% 0%, rgb(105, 230, 69) 0%, rgb(224, 250, 209) 100%);
+        }
+
+        .bg-skin-1 {
+            background: radial-gradient(ellipse at 7% -4%, rgb(158, 242, 186) 0%, rgb(224, 255, 235) 100%);
+        }
+
+        .bg-skin-2 {
+            background: radial-gradient(ellipse at 5% 0%, rgb(190, 195, 200) 0%, rgb(225, 228, 232) 100%);
+        }
+
+        .bg-skin-3 {
+            background: radial-gradient(ellipse at 5% 0%, rgb(235, 120, 100) 0%, rgb(245, 200, 190) 100%);
+        }
+
+        .bg-skin-4 {
+            background: radial-gradient(ellipse at 5% 0%, rgb(60, 60, 65) 0%, rgb(140, 140, 145) 100%);
+        }
+
+        .container {
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 8px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            height: calc(56px + env(safe-area-inset-top));
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.48);
+            border: none;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 1px rgba(46, 46, 51, 0.06);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            cursor: pointer;
+        }
+
+        .header-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: rgba(0, 0, 0, 0.86);
+        }
+
+        .header-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-width: 190px;
+            padding: 3px;
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.64);
+            border-radius: var(--control-radius);
+            box-shadow: inset 0 0 0 1px rgba(46, 46, 51, 0.08);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+        }
+
+        .header-tab {
+            height: 38px;
+            padding: 0 20px;
+            border-radius: 13px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: inherit;
+            color: rgba(0, 0, 0, 0.62);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        color 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        transform 0.1s ease;
+            white-space: nowrap;
+        }
+
+        .header-tab.active {
+            background: var(--action-bg);
+            color: var(--action-fg);
+        }
+
+        .header-tab:active {
+            transform: scale(0.98);
+        }
+
+        .header-tab:focus-visible,
+        .header-btn:focus-visible,
+        .order-button:focus-visible {
+            outline: 2px solid white;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        /* Card container */
+        .card-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 10px;
+            overflow: visible;
+        }
+
+        #card-canvas {
+            width: 100%;
+            max-width: 400px;
+            height: 280px;
+            touch-action: none;
+        }
+
+        #card-canvas:focus-visible,
+        .sticker-stage:focus-visible {
+            outline: 2px solid white;
+            outline-offset: -2px;
+            border-radius: 20px;
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        /* Unified design carousel */
+        .design-carousel-shell {
+            width: 100%;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .design-carousel {
+            display: flex;
+            gap: 18px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 4px 24px 8px;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: calc(50% - 30px);
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+        }
+
+        .design-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .design-carousel.dragging {
+            cursor: grabbing;
+            scroll-snap-type: none;
+        }
+
+        .design-option {
+            flex: 0 0 60px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            scroll-snap-align: center;
+            transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .design-option::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .design-option.selected::before {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        .design-swatch {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            transition: width 0.18s ease, height 0.18s ease;
+            width: 60px;
+            height: 60px;
+        }
+
+        .design-option.selected .design-swatch {
+            width: 52px;
+            height: 52px;
+        }
+
+        .design-option:active {
+            transform: scale(0.94);
+        }
+
+        .design-option:focus-visible {
+            outline: none;
+        }
+
+        .design-option:focus-visible::before {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--focus-ring), 0 0 0 5px rgba(255, 255, 255, 0.72);
+        }
+
+        .skin-0-gradient {
+            background: linear-gradient(135deg, rgb(66, 230, 102) 0%, rgb(201, 252, 171) 100%);
+        }
+
+        .skin-1-gradient {
+            background: linear-gradient(135deg, rgb(166, 250, 204) 0%, rgb(191, 255, 212) 100%);
+        }
+
+        .skin-2-gradient {
+            background: linear-gradient(135deg, rgb(195, 200, 210) 0%, rgb(215, 220, 228) 100%);
+        }
+
+        .skin-3-gradient {
+            background: linear-gradient(135deg, rgb(230, 100, 80) 0%, rgb(240, 140, 120) 100%);
+        }
+
+        .skin-4-gradient {
+            background: linear-gradient(135deg, rgb(50, 50, 55) 0%, rgb(85, 85, 90) 100%);
+        }
+
+        /* Bottom island */
+        .bottom-island {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 32px 24px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            z-index: 10;
+        }
+
+        .bottom-title {
+            font-size: 32px;
+            font-weight: 500;
+            color: rgba(0, 0, 0, 0.86);
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .bottom-description {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(0, 0, 0, 0.86);
+            text-align: center;
+            line-height: 1.4;
+            margin-bottom: 24px;
+        }
+
+        .order-button {
+            width: 100%;
+            height: 56px;
+            background: var(--action-bg);
+            border: none;
+            border-radius: var(--control-radius);
+            color: var(--action-fg);
+            font-size: 18px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
+
+        .order-button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* Sticker area */
+        .sticker-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 10px;
+            overflow: visible;
+        }
+
+        .sticker-area.visible {
+            display: flex;
+        }
+
+        .card-area.hidden {
+            display: none;
+        }
+
+        .sticker-stage {
+            width: 327px;
+            height: 280px;
+            position: relative;
+            touch-action: none;
+            overflow: visible;
+            perspective: 900px;
+        }
+
+        .sticker-phone {
+            position: absolute;
+            left: 50%;
+            bottom: 20px; /* ← вертикаль телефона: больше = выше, меньше/0 = ниже к краю */
+            width: 100%;
+            height: auto;
+            z-index: 1;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            transform-origin: 50% 70%;
+        }
+
+        .sticker-float {
+            position: absolute;
+            left: 50%;
+            z-index: 2;
+            pointer-events: none;
+            transform-style: preserve-3d;
+            transform-origin: center center;
+            will-change: transform, top;
+        }
+
+        .sticker-float .sticker-img {
+            width: 327px;
+            display: block;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .sticker-0-gradient {
+            background: linear-gradient(135deg, rgb(60, 40, 90) 0%, rgb(90, 60, 130) 100%);
+        }
+
+        .sticker-1-gradient {
+            background: linear-gradient(135deg, rgb(230, 180, 200) 0%, rgb(200, 170, 220) 50%, rgb(180, 200, 230) 100%);
+        }
+
+        .bg-sticker-0 {
+            background: radial-gradient(ellipse at 5% 0%, rgb(60, 40, 100) 0%, rgb(110, 90, 150) 100%);
+        }
+
+        .bg-sticker-1 {
+            background: radial-gradient(ellipse at 5% 0%, rgb(200, 170, 220) 0%, rgb(210, 200, 230) 100%);
+        }
+
+        .background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (min-width: 640px) {
+            .design-carousel {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 639px) {
+            .design-carousel {
+                padding-inline: calc(50% - 30px);
+            }
+        }
+
+        @media (max-height: 700px) {
+            .header {
+                height: calc(52px + env(safe-area-inset-top));
+                padding-top: max(8px, env(safe-area-inset-top));
+                padding-bottom: 8px;
+            }
+
+            .card-area,
+            .sticker-area {
+                padding-top: 4px;
+            }
+
+            #card-canvas,
+            .sticker-stage {
+                height: 220px;
+            }
+
+            .sticker-stage,
+            .sticker-float .sticker-img {
+                width: 300px;
+            }
+
+            .design-carousel-shell {
+                margin-top: 0;
+            }
+
+            .bottom-island {
+                padding: 20px;
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+            }
+
+            .bottom-title {
+                font-size: 28px;
+                margin-bottom: 8px;
+            }
+
+            .bottom-description {
+                font-size: 15px;
+                line-height: 1.35;
+                margin-bottom: 16px;
+            }
+
+            .order-button {
+                height: 52px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .background-gradient,
+            .background-video,
+            .header-tab,
+            .design-option,
+            .design-option::before,
+            .design-swatch,
+            .order-button {
+                transition-duration: 0.01ms !important;
+            }
+
+            .design-carousel {
+                scroll-behavior: auto;
+            }
+        }
+    </style>
+</head>
+<body class="skin-0">
+    <!-- Background gradients -->
+    <div class="background-gradient bg-skin-0" id="bg-0" style="opacity: 1;"></div>
+    <div class="background-gradient bg-skin-1" id="bg-1" style="opacity: 0;"></div>
+    <div class="background-gradient bg-skin-2" id="bg-2" style="opacity: 0;"></div>
+    <div class="background-gradient bg-skin-3" id="bg-3" style="opacity: 0;"></div>
+    <div class="background-gradient bg-skin-4" id="bg-4" style="opacity: 0;"></div>
+    <div class="background-gradient bg-sticker-0" id="bg-sticker-0" style="opacity: 0;"></div>
+    <div class="background-gradient bg-sticker-1" id="bg-sticker-1" style="opacity: 0;"></div>
+    <video class="background-video" id="bg-video" style="opacity: 0;" loop muted playsinline poster="images/bg_pay_poster.png" src="images/bg_pay.mp4"></video>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <button class="header-btn" type="button" aria-label="Назад">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <div class="header-tabs" role="tablist" aria-label="Тип продукта">
+                <button class="header-tab active" id="tab-card" type="button" role="tab" aria-selected="true" aria-controls="card-area">Карта</button>
+                <button class="header-tab" id="tab-sticker" type="button" role="tab" aria-selected="false" aria-controls="sticker-area" tabindex="-1">Стикер</button>
+            </div>
+            <button class="header-btn" type="button" aria-label="Помощь">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Card area -->
+        <div class="card-area" id="card-area" role="tabpanel" aria-labelledby="tab-card">
+            <canvas id="card-canvas" tabindex="0" role="button" aria-label="Показать оборот карты" aria-pressed="false"></canvas>
+        </div>
+
+        <!-- Sticker area -->
+        <div class="sticker-area" id="sticker-area" role="tabpanel" aria-labelledby="tab-sticker" aria-hidden="true">
+            <div class="sticker-stage" id="sticker-stage" tabindex="0" role="button" aria-label="Приклеить стикер на телефон" aria-pressed="false">
+                <img class="sticker-phone" id="sticker-phone" src="images/Phone_back_empty.png" alt="">
+                <div class="sticker-float" id="sticker-float">
+                    <img class="sticker-img" id="sticker-img" src="images/Pay_sticker_old.png" alt="Стикер">
+                </div>
+            </div>
+        </div>
+
+        <!-- One carousel for every card and sticker design -->
+        <nav class="design-carousel-shell" aria-label="Дизайны карты и стикера">
+            <div class="design-carousel" id="design-carousel" role="listbox" aria-orientation="horizontal" aria-label="Выберите дизайн">
+                <button class="design-option selected" type="button" role="option" aria-selected="true" aria-label="Карта, салатовый дизайн, 1 из 7" data-design-index="0" tabindex="0">
+                    <span class="design-swatch skin-0-gradient"></span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, мятный дизайн, 2 из 7" data-design-index="1" tabindex="-1">
+                    <span class="design-swatch skin-1-gradient"></span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, серебряный дизайн, 3 из 7" data-design-index="2" tabindex="-1">
+                    <span class="design-swatch skin-2-gradient"></span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, красный дизайн, 4 из 7" data-design-index="3" tabindex="-1">
+                    <span class="design-swatch skin-3-gradient"></span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, чёрный дизайн, 5 из 7" data-design-index="4" tabindex="-1">
+                    <span class="design-swatch skin-4-gradient"></span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, фиолетовый дизайн, 6 из 7" data-design-index="5" tabindex="-1">
+                    <span class="design-swatch sticker-0-gradient"></span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, перламутровый дизайн, 7 из 7" data-design-index="6" tabindex="-1">
+                    <span class="design-swatch sticker-1-gradient"></span>
+                </button>
+            </div>
+            <span class="visually-hidden" id="carousel-status" aria-live="polite"></span>
+        </nav>
+
+        <!-- Bottom island -->
+        <div class="bottom-island">
+            <h1 class="bottom-title" id="bottom-title">Карта</h1>
+            <p class="bottom-description" id="bottom-description">
+                Бесплатная и с кешбэком<br>
+                баллами Плюса — для оплаты<br>
+                онлайн и в магазинах
+            </p>
+            <button class="order-button" id="order-button">Заказать бесплатно</button>
+        </div>
+    </div>
+
+    <!-- Pure WebGL - NO EXTERNAL DEPENDENCIES -->
+    <script>
+        'use strict';
+        
+        // ============================================
+        // PURE WEBGL IMPLEMENTATION - NO LIBRARIES
+        // ============================================
+
+        // Card skins configuration
+        // cornerRadius — скругление лицевой/задней плоскости и рёбер (подложки между ними)
+        const skins = [
+            { front: 'images/card_front.png', back: 'images/card_back.png', edge: [0.95, 0.45, 0.65], cornerRadius: 0.10 },
+            { front: 'images/card_front_2.png', back: 'images/card_back_2.png', edge: [0.5, 0.8, 0.75], cornerRadius: 0.10 },
+            { front: 'images/Pay front.png', back: 'images/Pay back silver.png', mask: 'images/Pay mask.png', edge: [0.85, 0.85, 0.85], holographic: true, cornerRadius: 0.16 },
+            { front: 'images/Pay front red.png', back: 'images/Pay back red.png', mask: 'images/Pay mask.png', edge: [0.85, 0.85, 0.85], holographic: true, cornerRadius: 0.16 },
+            { front: 'images/Pay front black.png', back: 'images/Pay back black.png', mask: 'images/Pay mask.png', edge: [0.15, 0.15, 0.17], holographic: true, cornerRadius: 0.16 }
+        ];
+
+        let currentSkin = 0;
+        let gl, canvas;
+        let frontProgram, backProgram, edgeProgram, holoProgram;
+        let frontVAO, backVAO, edgeVAO;
+        let frontTexture, backTexture, maskTexture;
+        const textureCache = new Map();
+        const geometryCache = new Map();
+        let projectionMatrix, viewMatrix, modelMatrix;
+        let rotationY = 0, targetRotationY = 0, lastRotationY = 0;
+        let isDragging = false, startX = 0, isShowingBack = false;
+        let shakeOffset = { x: 0, y: 0, z: 0 };
+        let hintRotationY = 0; // For initial hint animation
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function haptic(duration) {
+            if (!prefersReducedMotion && navigator.vibrate) navigator.vibrate(duration);
+        }
+        let edgeIndexCount = 0;
+
+        // ============================================
+        // MATRIX MATH UTILITIES
+        // ============================================
+        
+        const mat4 = {
+            create: () => new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+            
+            perspective: (out, fovy, aspect, near, far) => {
+                const f = 1.0 / Math.tan(fovy / 2);
+                out[0] = f / aspect; out[1] = 0; out[2] = 0; out[3] = 0;
+                out[4] = 0; out[5] = f; out[6] = 0; out[7] = 0;
+                out[8] = 0; out[9] = 0; out[10] = (far + near) / (near - far); out[11] = -1;
+                out[12] = 0; out[13] = 0; out[14] = (2 * far * near) / (near - far); out[15] = 0;
+                return out;
+            },
+            
+            identity: (out) => {
+                out[0] = 1; out[1] = 0; out[2] = 0; out[3] = 0;
+                out[4] = 0; out[5] = 1; out[6] = 0; out[7] = 0;
+                out[8] = 0; out[9] = 0; out[10] = 1; out[11] = 0;
+                out[12] = 0; out[13] = 0; out[14] = 0; out[15] = 1;
+                return out;
+            },
+            
+            translate: (out, a, v) => {
+                const x = v[0], y = v[1], z = v[2];
+                out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
+                out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
+                out[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
+                out[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
+                if (out !== a) { out[0]=a[0]; out[1]=a[1]; out[2]=a[2]; out[3]=a[3];
+                    out[4]=a[4]; out[5]=a[5]; out[6]=a[6]; out[7]=a[7];
+                    out[8]=a[8]; out[9]=a[9]; out[10]=a[10]; out[11]=a[11]; }
+                return out;
+            },
+
+            rotateX: (out, a, rad) => {
+                const s = Math.sin(rad), c = Math.cos(rad);
+                const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+                const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+                if (out !== a) { out[0]=a[0]; out[1]=a[1]; out[2]=a[2]; out[3]=a[3];
+                    out[12]=a[12]; out[13]=a[13]; out[14]=a[14]; out[15]=a[15]; }
+                out[4] = a10*c + a20*s; out[5] = a11*c + a21*s; out[6] = a12*c + a22*s; out[7] = a13*c + a23*s;
+                out[8] = a20*c - a10*s; out[9] = a21*c - a11*s; out[10] = a22*c - a12*s; out[11] = a23*c - a13*s;
+                return out;
+            },
+            
+            rotateY: (out, a, rad) => {
+                const s = Math.sin(rad), c = Math.cos(rad);
+                const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+                const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+                if (out !== a) { out[4]=a[4]; out[5]=a[5]; out[6]=a[6]; out[7]=a[7];
+                    out[12]=a[12]; out[13]=a[13]; out[14]=a[14]; out[15]=a[15]; }
+                out[0] = a00*c - a20*s; out[1] = a01*c - a21*s; out[2] = a02*c - a22*s; out[3] = a03*c - a23*s;
+                out[8] = a00*s + a20*c; out[9] = a01*s + a21*c; out[10] = a02*s + a22*c; out[11] = a03*s + a23*c;
+                return out;
+            },
+            
+            rotateZ: (out, a, rad) => {
+                const s = Math.sin(rad), c = Math.cos(rad);
+                const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+                const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+                if (out !== a) { out[8]=a[8]; out[9]=a[9]; out[10]=a[10]; out[11]=a[11];
+                    out[12]=a[12]; out[13]=a[13]; out[14]=a[14]; out[15]=a[15]; }
+                out[0] = a00*c + a10*s; out[1] = a01*c + a11*s; out[2] = a02*c + a12*s; out[3] = a03*c + a13*s;
+                out[4] = a10*c - a00*s; out[5] = a11*c - a01*s; out[6] = a12*c - a02*s; out[7] = a13*c - a03*s;
+                return out;
+            },
+            
+            multiply: (out, a, b) => {
+                const a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7];
+                const a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+                let b0=b[0],b1=b[1],b2=b[2],b3=b[3];
+                out[0]=b0*a00+b1*a10+b2*a20+b3*a30; out[1]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[2]=b0*a02+b1*a12+b2*a22+b3*a32; out[3]=b0*a03+b1*a13+b2*a23+b3*a33;
+                b0=b[4];b1=b[5];b2=b[6];b3=b[7];
+                out[4]=b0*a00+b1*a10+b2*a20+b3*a30; out[5]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[6]=b0*a02+b1*a12+b2*a22+b3*a32; out[7]=b0*a03+b1*a13+b2*a23+b3*a33;
+                b0=b[8];b1=b[9];b2=b[10];b3=b[11];
+                out[8]=b0*a00+b1*a10+b2*a20+b3*a30; out[9]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[10]=b0*a02+b1*a12+b2*a22+b3*a32; out[11]=b0*a03+b1*a13+b2*a23+b3*a33;
+                b0=b[12];b1=b[13];b2=b[14];b3=b[15];
+                out[12]=b0*a00+b1*a10+b2*a20+b3*a30; out[13]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[14]=b0*a02+b1*a12+b2*a22+b3*a32; out[15]=b0*a03+b1*a13+b2*a23+b3*a33;
+                return out;
+            },
+            
+            normalFromMat4: (out, a) => {
+                const a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7];
+                const a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+                const b00=a00*a11-a01*a10, b01=a00*a12-a02*a10, b02=a00*a13-a03*a10;
+                const b03=a01*a12-a02*a11, b04=a01*a13-a03*a11, b05=a02*a13-a03*a12;
+                const b06=a20*a31-a21*a30, b07=a20*a32-a22*a30, b08=a20*a33-a23*a30;
+                const b09=a21*a32-a22*a31, b10=a21*a33-a23*a31, b11=a22*a33-a23*a32;
+                let det = b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06;
+                if (!det) return null;
+                det = 1.0 / det;
+                out[0]=(a11*b11-a12*b10+a13*b09)*det; out[1]=(a12*b08-a10*b11-a13*b07)*det;
+                out[2]=(a10*b10-a11*b08+a13*b06)*det; out[3]=(a02*b10-a01*b11-a03*b09)*det;
+                out[4]=(a00*b11-a02*b08+a03*b07)*det; out[5]=(a01*b08-a00*b10-a03*b06)*det;
+                out[6]=(a31*b05-a32*b04+a33*b03)*det; out[7]=(a32*b02-a30*b05-a33*b01)*det;
+                out[8]=(a30*b04-a31*b02+a33*b00)*det;
+                return out;
+            }
+        };
+
+        // ============================================
+        // WEBGL UTILITIES
+        // ============================================
+        
+        function compileShader(type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+        
+        function createProgram(vsSource, fsSource) {
+            const vs = compileShader(gl.VERTEX_SHADER, vsSource);
+            const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+            const program = gl.createProgram();
+            gl.attachShader(program, vs);
+            gl.attachShader(program, fs);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+                return null;
+            }
+            return program;
+        }
+        
+        function createBuffer(data, type = gl.ARRAY_BUFFER) {
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(type, buffer);
+            gl.bufferData(type, data, gl.STATIC_DRAW);
+            return buffer;
+        }
+        
+        function loadTexture(src) {
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            // Placeholder pixel
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([200,200,200,255]));
+            
+            const img = new Image();
+            img.crossOrigin = '';
+            img.onload = () => {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                // Flip Y axis for correct orientation
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            };
+            img.src = src;
+            return texture;
+        }
+
+        // ============================================
+        // GEOMETRY CREATION
+        // ============================================
+        
+        function createPlaneGeometry(width, height, radius) {
+            const hw = width / 2, hh = height / 2;
+            if (!radius) {
+                const positions = new Float32Array([-hw,-hh,0, hw,-hh,0, hw,hh,0, -hw,hh,0]);
+                const uvs = new Float32Array([0,0, 1,0, 1,1, 0,1]);
+                const normals = new Float32Array([0,0,1, 0,0,1, 0,0,1, 0,0,1]);
+                const indices = new Uint16Array([0,1,2, 0,2,3]);
+                return { positions, uvs, normals, indices };
+            }
+            const seg = 8, r = Math.min(radius, hw, hh);
+            const pts = [];
+            const corners = [
+                [hw-r, -hh+r, Math.PI*1.5], [-hw+r, -hh, null], [hw-r, -hh, null],
+            ];
+            pts.push([-hw+r, -hh]); pts.push([hw-r, -hh]);
+            for (let i = 0; i <= seg; i++) { const a = Math.PI*1.5+(Math.PI/2)*(i/seg); pts.push([hw-r+Math.cos(a)*r, -hh+r+Math.sin(a)*r]); }
+            pts.push([hw, hh-r]);
+            for (let i = 0; i <= seg; i++) { const a = (Math.PI/2)*(i/seg); pts.push([hw-r+Math.cos(a)*r, hh-r+Math.sin(a)*r]); }
+            pts.push([-hw+r, hh]);
+            for (let i = 0; i <= seg; i++) { const a = Math.PI/2+(Math.PI/2)*(i/seg); pts.push([-hw+r+Math.cos(a)*r, hh-r+Math.sin(a)*r]); }
+            pts.push([-hw, -hh+r]);
+            for (let i = 0; i <= seg; i++) { const a = Math.PI+(Math.PI/2)*(i/seg); pts.push([-hw+r+Math.cos(a)*r, -hh+r+Math.sin(a)*r]); }
+            const n = pts.length;
+            const positions = [0,0,0], uvs = [0.5,0.5], normals = [0,0,1];
+            for (const [x,y] of pts) { positions.push(x,y,0); uvs.push((x+hw)/width,(y+hh)/height); normals.push(0,0,1); }
+            const indices = [];
+            for (let i = 0; i < n; i++) indices.push(0, 1+i, 1+((i+1)%n));
+            return { positions: new Float32Array(positions), uvs: new Float32Array(uvs), normals: new Float32Array(normals), indices: new Uint16Array(indices) };
+        }
+        
+        function getRoundedRectPoints(hw, hh, r, segments) {
+            const points = [];
+            points.push([-hw+r, -hh]); points.push([hw-r, -hh]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = Math.PI*1.5 + (Math.PI/2)*(i/segments);
+                points.push([hw-r + Math.cos(angle)*r, -hh+r + Math.sin(angle)*r]);
+            }
+            points.push([hw, hh-r]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = 0 + (Math.PI/2)*(i/segments);
+                points.push([hw-r + Math.cos(angle)*r, hh-r + Math.sin(angle)*r]);
+            }
+            points.push([-hw+r, hh]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = Math.PI/2 + (Math.PI/2)*(i/segments);
+                points.push([-hw+r + Math.cos(angle)*r, hh-r + Math.sin(angle)*r]);
+            }
+            points.push([-hw, -hh+r]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = Math.PI + (Math.PI/2)*(i/segments);
+                points.push([-hw+r + Math.cos(angle)*r, -hh+r + Math.sin(angle)*r]);
+            }
+            return points;
+        }
+
+        function buildMeshFromOutline(outline, depth) {
+            const hd = depth / 2;
+            const numOutline = outline.length;
+            const positions = [], normals = [], indices = [];
+
+            const frontStart = positions.length / 3;
+            positions.push(0, 0, hd); normals.push(0, 0, 1);
+            for (const [x, y] of outline) { positions.push(x, y, hd); normals.push(0, 0, 1); }
+            for (let i = 0; i < numOutline; i++) {
+                indices.push(frontStart, frontStart+1+i, frontStart+1+((i+1)%numOutline));
+            }
+
+            const backStart = positions.length / 3;
+            positions.push(0, 0, -hd); normals.push(0, 0, -1);
+            for (const [x, y] of outline) { positions.push(x, y, -hd); normals.push(0, 0, -1); }
+            for (let i = 0; i < numOutline; i++) {
+                indices.push(backStart, backStart+1+((i+1)%numOutline), backStart+1+i);
+            }
+
+            const sideStart = positions.length / 3;
+            for (let i = 0; i < numOutline; i++) {
+                const [x, y] = outline[i];
+                const [nx, ny] = outline[(i + 1) % numOutline];
+                const dx = nx - x, dy = ny - y;
+                const len = Math.sqrt(dx*dx + dy*dy) || 1;
+                const normalX = dy / len, normalY = -dx / len;
+
+                positions.push(x, y, hd, x, y, -hd, nx, ny, -hd, nx, ny, hd);
+                normals.push(normalX, normalY, 0, normalX, normalY, 0, normalX, normalY, 0, normalX, normalY, 0);
+
+                const base = sideStart + i * 4;
+                indices.push(base, base+1, base+2, base, base+2, base+3);
+            }
+
+            return {
+                positions: new Float32Array(positions),
+                normals: new Float32Array(normals),
+                indices: new Uint16Array(indices)
+            };
+        }
+
+        function createRoundedBoxGeometry(width, height, depth, radius) {
+            const segments = 8;
+            const hw = width/2, hh = height/2;
+            const r = Math.min(radius, hw, hh);
+            const outline = getRoundedRectPoints(hw, hh, r, segments);
+            return buildMeshFromOutline(outline, depth);
+        }
+
+        // ============================================
+        // SHADERS
+        // ============================================
+        
+        const texturedVS = `
+            attribute vec3 aPosition;
+            attribute vec2 aUV;
+            attribute vec3 aNormal;
+            uniform mat4 uProjection;
+            uniform mat4 uModelView;
+            uniform mat3 uNormalMatrix;
+            varying vec2 vUV;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec4 mvPos = uModelView * vec4(aPosition, 1.0);
+                vViewPos = -mvPos.xyz;
+                vNormal = normalize(uNormalMatrix * aNormal);
+                vUV = aUV;
+                gl_Position = uProjection * mvPos;
+            }
+        `;
+        
+        const texturedFS = `
+            precision highp float;
+            uniform sampler2D uTexture;
+            uniform vec3 uLightPos;
+            uniform float uAmbient;
+            varying vec2 vUV;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec4 tex = texture2D(uTexture, vUV);
+                vec3 N = normalize(vNormal);
+                vec3 L = normalize(uLightPos - (-vViewPos));
+                vec3 V = normalize(vViewPos);
+                vec3 H = normalize(L + V);
+                float diff = max(dot(N, L), 0.0);
+                float spec = pow(max(dot(N, H), 0.0), 32.0) * 0.1;
+                vec3 color = tex.rgb * (uAmbient + diff * 0.5) + vec3(spec);
+                gl_FragColor = vec4(color, tex.a);
+            }
+        `;
+        
+        const coloredVS = `
+            attribute vec3 aPosition;
+            attribute vec3 aNormal;
+            uniform mat4 uProjection;
+            uniform mat4 uModelView;
+            uniform mat3 uNormalMatrix;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec4 mvPos = uModelView * vec4(aPosition, 1.0);
+                vViewPos = -mvPos.xyz;
+                vNormal = normalize(uNormalMatrix * aNormal);
+                gl_Position = uProjection * mvPos;
+            }
+        `;
+        
+        const coloredFS = `
+            precision highp float;
+            uniform vec3 uColor;
+            uniform vec3 uLightPos;
+            uniform float uAmbient;
+            uniform float uSpecStrength;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec3 N = normalize(vNormal);
+                vec3 L = normalize(uLightPos - (-vViewPos));
+                vec3 V = normalize(vViewPos);
+                vec3 H = normalize(L + V);
+                float diff = max(dot(N, L), 0.0);
+                float spec = pow(max(dot(N, H), 0.0), 64.0) * uSpecStrength;
+                vec3 color = uColor * (uAmbient + diff * 0.5) + vec3(spec);
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+        
+        const holoFS = `
+            precision highp float;
+            uniform sampler2D uTexture;
+            uniform sampler2D uMask;
+            uniform float uRotationAngle;
+            uniform vec3 uLightPos;
+            uniform float uAmbient;
+            varying vec2 vUV;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            
+            vec3 hsv2rgb(vec3 c) {
+                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+            }
+            
+            float grain(vec2 p) {
+                vec2 q = floor(p);
+                return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453);
+            }
+            
+            void main() {
+                vec4 tex = texture2D(uTexture, vUV);
+                vec4 maskColor = texture2D(uMask, vUV);
+                float lum = maskColor.r * 0.299 + maskColor.g * 0.587 + maskColor.b * 0.114;
+                float maskVal = maskColor.a * (1.0 - lum);
+                maskVal = smoothstep(0.1, 0.35, maskVal);
+                
+                vec3 N = normalize(vNormal);
+                float a = uRotationAngle;
+                
+                float px = grain(vUV * 800.0);
+                float py = grain(vUV * 800.0 + vec2(73.1, 19.3));
+                vec3 perturbedN = normalize(N + vec3((px - 0.5) * 0.16, (py - 0.5) * 0.06, 0.0) * maskVal);
+                
+                vec3 L = normalize(uLightPos - (-vViewPos));
+                vec3 V = normalize(vViewPos);
+                vec3 H = normalize(L + V);
+                float diff = max(dot(perturbedN, L), 0.0);
+                float spec = pow(max(dot(perturbedN, H), 0.0), 14.0) * 0.12;
+                
+                float n1 = sin(vUV.x * 3.2 + vUV.y * 1.8 + a * 1.4);
+                float n2 = sin(vUV.x * 1.4 - vUV.y * 3.5 + a * 0.9 + 1.7);
+                float n3 = cos(vUV.x * 2.6 + vUV.y * 0.7 - a * 1.1 + 0.5);
+                float n4 = sin(vUV.x * 0.8 + vUV.y * 2.4 + a * 0.6 + 3.1);
+                float hue = fract((n1 + n2 + n3 + n4) * 0.12 + a * 0.15 + 0.15);
+                
+                float hlX = 0.5 + sin(a + 0.1) * 0.45;
+                float hlY = 0.5 + cos(a * 0.7 + 3.2) * 0.3;
+                float hlDist = length(vUV - vec2(hlX, hlY));
+                float hlFade = 1.0 - smoothstep(0.15, 0.55, hlDist);
+                
+                float sat = (0.42 + 0.12 * (sin(vUV.x * 2.0 - vUV.y * 1.5 + a) * 0.5 + 0.5)) * hlFade;
+                float val = 0.95 + 0.05 * n3;
+                vec3 rainbow = hsv2rgb(vec3(hue, sat, val));
+                
+                float fresnel = 1.0 - max(dot(perturbedN, V), 0.0);
+                fresnel = pow(fresnel, 2.0);
+                
+                // Блик по фону — как на задней стороне; на буквах свой gloss/flare
+                float bgSpec = pow(max(dot(N, H), 0.0), 32.0) * 0.1;
+                float matteSpec = spec * maskVal;
+                vec3 baseColor = tex.rgb * (uAmbient + diff * 0.5) + vec3(matteSpec + bgSpec * (1.0 - maskVal));
+                
+                float wX = vUV.x + sin(vUV.y * 5.0 + a * 1.3) * 0.12;
+                float wY = vUV.y + cos(vUV.x * 4.0 + a * 0.9) * 0.1;
+                float flare = pow(max(1.0 - abs(fract(wX * 0.8 - wY * 0.3 + a * 0.5) - 0.5) * 1.0, 0.0), 1.5) * 0.1;
+                
+                float glossGrain = (grain(vUV * 600.0 + vec2(41.7, 83.2)) - 0.5) * 0.015;
+                float glossStrength = (0.5 + fresnel * 0.55) * mix(0.0, 1.0, hlFade);
+                float darkening = mix(0.95, 1.0, hlFade);
+                vec3 glossBase = baseColor * darkening;
+                vec3 glossHolo = mix(glossBase + vec3(spec * (1.0 - maskVal)), rainbow, glossStrength) + vec3(glossGrain) * maskVal;
+                glossHolo += vec3(flare) * maskVal * hlFade;
+                
+                vec3 matteRainbow = hsv2rgb(vec3(hue, sat * 0.1, val * 0.95));
+                vec3 matteHolo = mix(baseColor, matteRainbow, 0.05);
+                
+                vec3 holoColor = mix(matteHolo, glossHolo, maskVal);
+                
+                gl_FragColor = vec4(holoColor, tex.a);
+            }
+        `;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        function init() {
+            canvas = document.getElementById('card-canvas');
+            gl = canvas.getContext('webgl', { antialias: true, alpha: true });
+            if (!gl) { alert('WebGL not supported'); return; }
+            
+            const dpr = Math.min(window.devicePixelRatio, 2);
+            canvas.width = canvas.clientWidth * dpr;
+            canvas.height = canvas.clientHeight * dpr;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.CULL_FACE);
+            gl.cullFace(gl.BACK);
+            gl.clearColor(0, 0, 0, 0);
+            
+            // Create programs
+            frontProgram = createProgram(texturedVS, texturedFS);
+            backProgram = createProgram(texturedVS, texturedFS);
+            edgeProgram = createProgram(coloredVS, coloredFS);
+            holoProgram = createProgram(texturedVS, holoFS);
+            
+            // Create matrices
+            projectionMatrix = mat4.create();
+            viewMatrix = mat4.create();
+            modelMatrix = mat4.create();
+            
+            const aspect = canvas.clientWidth / canvas.clientHeight;
+            mat4.perspective(projectionMatrix, 45 * Math.PI / 180, aspect, 0.1, 100);
+            mat4.identity(viewMatrix);
+            mat4.translate(viewMatrix, viewMatrix, [0, 0, -4.2]);
+            
+            updateCardGeometry(currentSkin);
+            updateTextures();
+            
+            setupEventListeners();
+            animate();
+        }
+
+        function updateCardGeometry(skinIndex) {
+            const cornerRadius = skins[skinIndex].cornerRadius ?? 0.10;
+            const cachedGeometry = geometryCache.get(cornerRadius);
+            if (cachedGeometry) {
+                frontVAO = cachedGeometry.front;
+                backVAO = cachedGeometry.back;
+                edgeVAO = cachedGeometry.edge;
+                edgeIndexCount = cachedGeometry.edge.count;
+                return;
+            }
+
+            const cardWidth = 3.2, cardHeight = 2.02, cardDepth = 0.04;
+            
+            // Front plane (rounded)
+            const frontGeo = createPlaneGeometry(cardWidth, cardHeight, cornerRadius);
+            const frontPosBuffer = createBuffer(frontGeo.positions);
+            const frontUVBuffer = createBuffer(frontGeo.uvs);
+            const frontNormBuffer = createBuffer(frontGeo.normals);
+            const frontIdxBuffer = createBuffer(frontGeo.indices, gl.ELEMENT_ARRAY_BUFFER);
+            frontVAO = { pos: frontPosBuffer, uv: frontUVBuffer, norm: frontNormBuffer, idx: frontIdxBuffer, count: frontGeo.indices.length, z: cardDepth/2 + 0.005 };
+            
+            // Back plane (rounded)
+            const backGeo = createPlaneGeometry(cardWidth, cardHeight, cornerRadius);
+            const backPosBuffer = createBuffer(backGeo.positions);
+            const backUVBuffer = createBuffer(backGeo.uvs);
+            const backNormBuffer = createBuffer(backGeo.normals);
+            const backIdxBuffer = createBuffer(backGeo.indices, gl.ELEMENT_ARRAY_BUFFER);
+            backVAO = { pos: backPosBuffer, uv: backUVBuffer, norm: backNormBuffer, idx: backIdxBuffer, count: backGeo.indices.length, z: -cardDepth/2 - 0.005 };
+            
+            // Edge (подложка между передней и задней стороной)
+            const edgeGeo = createRoundedBoxGeometry(cardWidth, cardHeight, cardDepth, cornerRadius);
+            const edgePosBuffer = createBuffer(edgeGeo.positions);
+            const edgeNormBuffer = createBuffer(edgeGeo.normals);
+            const edgeIdxBuffer = createBuffer(edgeGeo.indices, gl.ELEMENT_ARRAY_BUFFER);
+            edgeIndexCount = edgeGeo.indices.length;
+            edgeVAO = { pos: edgePosBuffer, norm: edgeNormBuffer, idx: edgeIdxBuffer, count: edgeIndexCount };
+
+            geometryCache.set(cornerRadius, {
+                front: frontVAO,
+                back: backVAO,
+                edge: edgeVAO
+            });
+        }
+
+        function updateTextures() {
+            const skin = skins[currentSkin];
+            let cachedTextures = textureCache.get(currentSkin);
+            if (!cachedTextures) {
+                cachedTextures = {
+                    front: loadTexture(skin.front),
+                    back: loadTexture(skin.back),
+                    mask: skin.mask ? loadTexture(skin.mask) : null
+                };
+                textureCache.set(currentSkin, cachedTextures);
+            }
+
+            frontTexture = cachedTextures.front;
+            backTexture = cachedTextures.back;
+            maskTexture = cachedTextures.mask;
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        
+        function drawTexturedMesh(program, vao, texture, modelMat, flipY = false) {
+            gl.useProgram(program);
+            
+            const mvMatrix = mat4.create();
+            mat4.multiply(mvMatrix, viewMatrix, modelMat);
+            
+            const normalMat = new Float32Array(9);
+            mat4.normalFromMat4(normalMat, mvMatrix);
+            
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uProjection'), false, projectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uModelView'), false, mvMatrix);
+            gl.uniformMatrix3fv(gl.getUniformLocation(program, 'uNormalMatrix'), false, normalMat);
+            gl.uniform3fv(gl.getUniformLocation(program, 'uLightPos'), [3, 3, 5]);
+            gl.uniform1f(gl.getUniformLocation(program, 'uAmbient'), 0.5);
+            
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(gl.getUniformLocation(program, 'uTexture'), 0);
+            
+            const posLoc = gl.getAttribLocation(program, 'aPosition');
+            const uvLoc = gl.getAttribLocation(program, 'aUV');
+            const normLoc = gl.getAttribLocation(program, 'aNormal');
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.pos);
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.uv);
+            gl.enableVertexAttribArray(uvLoc);
+            gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.norm);
+            gl.enableVertexAttribArray(normLoc);
+            gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vao.idx);
+            gl.drawElements(gl.TRIANGLES, vao.count, gl.UNSIGNED_SHORT, 0);
+        }
+        
+        function drawColoredMesh(program, vao, color, modelMat, specStrength = 0.4) {
+            gl.useProgram(program);
+            
+            const mvMatrix = mat4.create();
+            mat4.multiply(mvMatrix, viewMatrix, modelMat);
+            
+            const normalMat = new Float32Array(9);
+            mat4.normalFromMat4(normalMat, mvMatrix);
+            
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uProjection'), false, projectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uModelView'), false, mvMatrix);
+            gl.uniformMatrix3fv(gl.getUniformLocation(program, 'uNormalMatrix'), false, normalMat);
+            gl.uniform3fv(gl.getUniformLocation(program, 'uColor'), color);
+            gl.uniform3fv(gl.getUniformLocation(program, 'uLightPos'), [3, 3, 5]);
+            gl.uniform1f(gl.getUniformLocation(program, 'uSpecStrength'), specStrength);
+            gl.uniform1f(gl.getUniformLocation(program, 'uAmbient'), 0.4);
+            
+            const posLoc = gl.getAttribLocation(program, 'aPosition');
+            const normLoc = gl.getAttribLocation(program, 'aNormal');
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.pos);
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.norm);
+            gl.enableVertexAttribArray(normLoc);
+            gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vao.idx);
+            gl.drawElements(gl.TRIANGLES, vao.count, gl.UNSIGNED_SHORT, 0);
+        }
+        
+        function drawHoloMesh(vao, baseTexture, maskTex, rotAngle, modelMat) {
+            gl.useProgram(holoProgram);
+            
+            const mvMatrix = mat4.create();
+            mat4.multiply(mvMatrix, viewMatrix, modelMat);
+            
+            const normalMat = new Float32Array(9);
+            mat4.normalFromMat4(normalMat, mvMatrix);
+            
+            gl.uniformMatrix4fv(gl.getUniformLocation(holoProgram, 'uProjection'), false, projectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(holoProgram, 'uModelView'), false, mvMatrix);
+            gl.uniformMatrix3fv(gl.getUniformLocation(holoProgram, 'uNormalMatrix'), false, normalMat);
+            gl.uniform3fv(gl.getUniformLocation(holoProgram, 'uLightPos'), [3, 3, 5]);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uAmbient'), 0.5);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uRotationAngle'), rotAngle);
+            
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, baseTexture);
+            gl.uniform1i(gl.getUniformLocation(holoProgram, 'uTexture'), 0);
+            
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, maskTex);
+            gl.uniform1i(gl.getUniformLocation(holoProgram, 'uMask'), 1);
+            
+            const posLoc = gl.getAttribLocation(holoProgram, 'aPosition');
+            const uvLoc = gl.getAttribLocation(holoProgram, 'aUV');
+            const normLoc = gl.getAttribLocation(holoProgram, 'aNormal');
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.pos);
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.uv);
+            gl.enableVertexAttribArray(uvLoc);
+            gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.norm);
+            gl.enableVertexAttribArray(normLoc);
+            gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vao.idx);
+            gl.drawElements(gl.TRIANGLES, vao.count, gl.UNSIGNED_SHORT, 0);
+        }
+        
+        function render() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            // Smooth rotation
+            rotationY += (targetRotationY - rotationY) * 0.15;
+            const rotY = rotationY * Math.PI / 180 + shakeOffset.y + hintRotationY;
+            const rotX = shakeOffset.x;
+            
+            const skin = skins[currentSkin];
+
+            // Edge
+            mat4.identity(modelMatrix);
+            mat4.rotateY(modelMatrix, modelMatrix, rotY);
+            mat4.rotateX(modelMatrix, modelMatrix, rotX);
+            drawColoredMesh(edgeProgram, edgeVAO, skin.edge, modelMatrix);
+            
+            // Front face
+            const frontMat = mat4.create();
+            mat4.identity(frontMat);
+            mat4.rotateY(frontMat, frontMat, rotY);
+            mat4.rotateX(frontMat, frontMat, rotX);
+            mat4.translate(frontMat, frontMat, [0, 0, frontVAO.z]);
+            if (skin.holographic && maskTexture) {
+                drawHoloMesh(frontVAO, frontTexture, maskTexture, rotY, frontMat);
+            } else {
+                drawTexturedMesh(frontProgram, frontVAO, frontTexture, frontMat);
+            }
+            
+            // Back face
+            const backMat = mat4.create();
+            mat4.identity(backMat);
+            mat4.rotateY(backMat, backMat, rotY);
+            mat4.rotateX(backMat, backMat, rotX);
+            mat4.translate(backMat, backMat, [0, 0, backVAO.z]);
+            mat4.rotateY(backMat, backMat, Math.PI);
+            drawTexturedMesh(backProgram, backVAO, backTexture, backMat);
+        }
+
+        // ============================================
+        // EVENT HANDLING
+        // ============================================
+
+        function setupEventListeners() {
+            canvas.addEventListener('touchstart', e => { e.preventDefault(); isDragging = true; startX = e.touches[0].clientX; }, { passive: false });
+            canvas.addEventListener('touchmove', e => { if (!isDragging) return; e.preventDefault(); targetRotationY = lastRotationY + (e.touches[0].clientX - startX) * 0.5; checkFlip(); }, { passive: false });
+            canvas.addEventListener('touchend', () => { isDragging = false; snapToPosition(); });
+            
+            canvas.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX; });
+            canvas.addEventListener('mousemove', e => { if (!isDragging) return; targetRotationY = lastRotationY + (e.clientX - startX) * 0.5; checkFlip(); });
+            canvas.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; snapToPosition(); } });
+            canvas.addEventListener('mouseleave', () => { if (isDragging) { isDragging = false; snapToPosition(); } });
+            canvas.addEventListener('keydown', handleCardKeydown);
+            
+            window.addEventListener('resize', handleWindowResize);
+
+            const carousel = document.getElementById('design-carousel');
+            carousel.querySelectorAll('.design-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    if (suppressCarouselClick) return;
+                    selectCarouselItem(Number(option.dataset.designIndex));
+                });
+            });
+            carousel.addEventListener('scroll', handleCarouselScroll, { passive: true });
+            carousel.addEventListener('touchstart', handleCarouselTouchStart, { passive: true });
+            carousel.addEventListener('touchmove', handleCarouselTouchMove, { passive: true });
+            carousel.addEventListener('touchend', handleCarouselTouchEnd, { passive: true });
+            carousel.addEventListener('touchcancel', handleCarouselTouchEnd, { passive: true });
+            carousel.addEventListener('wheel', cancelProgrammaticCarouselScroll, { passive: true });
+            if ('onscrollend' in carousel) carousel.addEventListener('scrollend', handleCarouselScrollEnd);
+            carousel.addEventListener('keydown', handleCarouselKeydown);
+            setupCarouselPointerDrag(carousel);
+
+            const cardTab = document.getElementById('tab-card');
+            const stickerTab = document.getElementById('tab-sticker');
+            cardTab.addEventListener('click', () => switchMode('card'));
+            stickerTab.addEventListener('click', () => switchMode('sticker'));
+            cardTab.addEventListener('keydown', handleTabKeydown);
+            stickerTab.addEventListener('keydown', handleTabKeydown);
+        }
+
+        function resizeCardCanvas() {
+            if (!canvas || !gl || !projectionMatrix) return;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = Math.min(window.devicePixelRatio, 2);
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            mat4.perspective(projectionMatrix, 45 * Math.PI / 180, width / height, 0.1, 100);
+        }
+
+        function handleWindowResize() {
+            resizeCardCanvas();
+            requestAnimationFrame(() => centerCarouselItem(currentCarouselIndex));
+        }
+
+        function checkFlip() {
+            const angle = Math.abs(targetRotationY % 360);
+            const newBack = angle > 90 && angle < 270;
+            if (newBack !== isShowingBack) {
+                isShowingBack = newBack;
+                updateCardAccessibility();
+                haptic(10);
+            }
+        }
+
+        function snapToPosition() {
+            const snapped = Math.round(targetRotationY / 180) * 180;
+            targetRotationY = snapped;
+            lastRotationY = snapped;
+        }
+
+        function updateCardAccessibility() {
+            if (!canvas) return;
+            canvas.setAttribute('aria-pressed', String(isShowingBack));
+            canvas.setAttribute('aria-label', isShowingBack ? 'Показать лицевую сторону карты' : 'Показать оборот карты');
+        }
+
+        function toggleCardSide() {
+            targetRotationY = lastRotationY + 180;
+            lastRotationY = targetRotationY;
+            checkFlip();
+        }
+
+        function handleCardKeydown(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            toggleCardSide();
+        }
+        
+        const themeColors = ['#D9FAE0', '#D4F5E3', '#DEE0E4', '#F0C8C0', '#808083'];
+        
+        const videoSkins = [2, 3, 4];
+
+        let currentMode = 'card'; // 'card' or 'sticker'
+        let currentSticker = 0;
+
+        const stickers = [
+            { src: 'images/Pay_sticker_old.png', bg: 'sticker-0', themeColor: '#5A3C82', phone: 'images/Phone_back_empty.png' },
+            { src: 'images/Pay_sticker.png', bg: 'sticker-1', themeColor: '#D2C0E0', phone: 'images/Phone_back_empty.png' }
+        ];
+
+        const carouselItems = [
+            { mode: 'card', localIndex: 0, label: 'Карта, салатовый дизайн' },
+            { mode: 'card', localIndex: 1, label: 'Карта, мятный дизайн' },
+            { mode: 'card', localIndex: 2, label: 'Карта, серебряный дизайн' },
+            { mode: 'card', localIndex: 3, label: 'Карта, красный дизайн' },
+            { mode: 'card', localIndex: 4, label: 'Карта, чёрный дизайн' },
+            { mode: 'sticker', localIndex: 0, label: 'Стикер, фиолетовый дизайн' },
+            { mode: 'sticker', localIndex: 1, label: 'Стикер, перламутровый дизайн' }
+        ];
+
+        let currentCarouselIndex = 0;
+        let carouselScrollTimer = null;
+        let programmaticCarouselTimer = null;
+        let programmaticCarouselScroll = false;
+        let carouselInteractionActive = false;
+        let carouselTouchStartX = 0;
+        let carouselTouchMoved = false;
+        let suppressCarouselClick = false;
+
+        // Позиции и анимация стикеров (оба скина). Редактируй значения ниже.
+        const STICKER_LAND = {
+            idleTop: 48,      // ← стикер на лицевой стороне: больше % = ниже в контейнере
+            landedTop: 54,      // ← стикер на телефоне (задняя сторона)
+            landedRot: 5,
+            landedScale: 0.7,
+            maxRotY: 20,
+            rotPerPx: 0.5,
+            maxScaleBoost: 0.14,
+            peakScale: 1.14,
+            dragThreshold: 12,
+            animDuration: 600,
+            phoneScaleStart: 0.38,
+            phoneScaleEnd: 1,
+            phoneBlurMax: 24
+        };
+
+        let stickerInteractState = 'idle';
+        let stickerDragStartX = 0;
+        let stickerDragRot = 0;
+        let stickerDragScale = 1;
+        let stickerDragFromLanded = false;
+        let stickerAnimFrame = null;
+        let stickerShakeRot = 0;
+        let stickerShakeFrame = null;
+        let cardShakeFrame = null;
+
+        function switchMode(mode) {
+            const targetIndex = mode === 'card' ? currentSkin : skins.length + currentSticker;
+            selectCarouselItem(targetIndex);
+        }
+
+        function updateModePresentation(mode) {
+            currentMode = mode;
+
+            const cardTab = document.getElementById('tab-card');
+            const stickerTab = document.getElementById('tab-sticker');
+            const isCard = mode === 'card';
+
+            cardTab.classList.toggle('active', isCard);
+            stickerTab.classList.toggle('active', !isCard);
+            cardTab.setAttribute('aria-selected', String(isCard));
+            stickerTab.setAttribute('aria-selected', String(!isCard));
+            cardTab.tabIndex = isCard ? 0 : -1;
+            stickerTab.tabIndex = isCard ? -1 : 0;
+
+            const cardArea = document.getElementById('card-area');
+            const stickerArea = document.getElementById('sticker-area');
+
+            if (isCard) {
+                cardArea.classList.remove('hidden');
+                stickerArea.classList.remove('visible');
+                cardArea.setAttribute('aria-hidden', 'false');
+                stickerArea.setAttribute('aria-hidden', 'true');
+                document.getElementById('bottom-title').textContent = 'Карта';
+                document.getElementById('bottom-description').innerHTML = 'Бесплатная и с кешбэком<br>баллами Плюса — для оплаты<br>онлайн и в магазинах';
+                document.getElementById('order-button').setAttribute('aria-label', 'Заказать карту бесплатно');
+                requestAnimationFrame(resizeCardCanvas);
+            } else {
+                cardArea.classList.add('hidden');
+                stickerArea.classList.add('visible');
+                cardArea.setAttribute('aria-hidden', 'true');
+                stickerArea.setAttribute('aria-hidden', 'false');
+                document.getElementById('bottom-title').textContent = 'Стикер';
+                document.getElementById('bottom-description').innerHTML = 'Бесплатная и с кешбэком<br>баллами Плюса — чтобы приклеить<br>на телефон или куда вздумается';
+                document.getElementById('order-button').setAttribute('aria-label', 'Заказать стикер бесплатно');
+            }
+        }
+
+        function selectCarouselItem(index, options = {}) {
+            const nextIndex = Math.max(0, Math.min(carouselItems.length - 1, index));
+            const item = carouselItems[nextIndex];
+            const changed = nextIndex !== currentCarouselIndex;
+            currentCarouselIndex = nextIndex;
+
+            updateModePresentation(item.mode);
+            if (item.mode === 'card') selectSkin(item.localIndex);
+            else selectSticker(item.localIndex);
+
+            document.querySelectorAll('.design-option').forEach((option, optionIndex) => {
+                const selected = optionIndex === nextIndex;
+                option.classList.toggle('selected', selected);
+                option.setAttribute('aria-selected', String(selected));
+                option.tabIndex = selected ? 0 : -1;
+            });
+
+            if (changed && options.announce !== false) {
+                document.getElementById('carousel-status').textContent = `${item.label}, ${nextIndex + 1} из ${carouselItems.length}`;
+            }
+            if (options.scroll !== false) {
+                clearTimeout(carouselScrollTimer);
+                centerCarouselItem(nextIndex);
+            }
+            if (options.focus) {
+                const activeOption = document.querySelector(`.design-option[data-design-index="${nextIndex}"]`);
+                activeOption?.focus({ preventScroll: true });
+            }
+        }
+
+        function centerCarouselItem(index) {
+            const carousel = document.getElementById('design-carousel');
+            if (carousel.scrollWidth <= carousel.clientWidth + 1) return;
+
+            const option = carousel.querySelector(`[data-design-index="${index}"]`);
+            if (!option) return;
+
+            const carouselRect = carousel.getBoundingClientRect();
+            const optionRect = option.getBoundingClientRect();
+            const centerDelta = optionRect.left + optionRect.width / 2 - (carouselRect.left + carouselRect.width / 2);
+            if (Math.abs(centerDelta) < 1) return;
+
+            programmaticCarouselScroll = true;
+            clearTimeout(programmaticCarouselTimer);
+            option.scrollIntoView({
+                behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+            programmaticCarouselTimer = setTimeout(() => {
+                programmaticCarouselScroll = false;
+            }, prefersReducedMotion ? 20 : 450);
+        }
+
+        function cancelProgrammaticCarouselScroll() {
+            programmaticCarouselScroll = false;
+            clearTimeout(programmaticCarouselTimer);
+        }
+
+        function handleCarouselTouchStart(event) {
+            cancelProgrammaticCarouselScroll();
+            carouselInteractionActive = true;
+            carouselTouchStartX = event.touches[0]?.clientX ?? 0;
+            carouselTouchMoved = false;
+            clearTimeout(carouselScrollTimer);
+        }
+
+        function handleCarouselTouchMove(event) {
+            const clientX = event.touches[0]?.clientX;
+            if (clientX !== undefined && Math.abs(clientX - carouselTouchStartX) > 6) {
+                carouselTouchMoved = true;
+            }
+        }
+
+        function handleCarouselTouchEnd() {
+            carouselInteractionActive = false;
+            if (carouselTouchMoved) {
+                suppressCarouselClick = true;
+                setTimeout(() => { suppressCarouselClick = false; }, 400);
+            }
+            scheduleCarouselSelection(180);
+        }
+
+        function closestCarouselIndex() {
+            const carousel = document.getElementById('design-carousel');
+            const center = carousel.getBoundingClientRect().left + carousel.clientWidth / 2;
+            let closestIndex = currentCarouselIndex;
+            let closestDistance = Infinity;
+
+            carousel.querySelectorAll('.design-option').forEach((option, index) => {
+                const rect = option.getBoundingClientRect();
+                const distance = Math.abs(rect.left + rect.width / 2 - center);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = index;
+                }
+            });
+            return closestIndex;
+        }
+
+        function handleCarouselScroll() {
+            const carousel = document.getElementById('design-carousel');
+            if (programmaticCarouselScroll || carouselInteractionActive || carousel.scrollWidth <= carousel.clientWidth + 1) return;
+
+            scheduleCarouselSelection(140);
+        }
+
+        function handleCarouselScrollEnd() {
+            if (programmaticCarouselScroll) {
+                cancelProgrammaticCarouselScroll();
+                return;
+            }
+            if (!carouselInteractionActive) selectCarouselItem(closestCarouselIndex(), { scroll: false });
+        }
+
+        function scheduleCarouselSelection(delay) {
+            clearTimeout(carouselScrollTimer);
+            carouselScrollTimer = setTimeout(() => {
+                if (programmaticCarouselScroll || carouselInteractionActive) return;
+                selectCarouselItem(closestCarouselIndex(), { scroll: false });
+            }, delay);
+        }
+
+        function setupCarouselPointerDrag(carousel) {
+            let pointerId = null;
+            let startX = 0;
+            let startScrollLeft = 0;
+            let moved = false;
+
+            carousel.addEventListener('pointerdown', event => {
+                if (event.pointerType !== 'mouse' || event.button !== 0 || carousel.scrollWidth <= carousel.clientWidth + 1) return;
+                cancelProgrammaticCarouselScroll();
+                pointerId = event.pointerId;
+                startX = event.clientX;
+                startScrollLeft = carousel.scrollLeft;
+                moved = false;
+                carouselInteractionActive = true;
+                carousel.classList.add('dragging');
+                carousel.setPointerCapture?.(pointerId);
+            });
+
+            carousel.addEventListener('pointermove', event => {
+                if (event.pointerId !== pointerId) return;
+                const delta = event.clientX - startX;
+                if (Math.abs(delta) > 4) moved = true;
+                carousel.scrollLeft = startScrollLeft - delta;
+            });
+
+            const finishDrag = event => {
+                if (event.pointerId !== pointerId) return;
+                carousel.releasePointerCapture?.(pointerId);
+                pointerId = null;
+                carouselInteractionActive = false;
+                carousel.classList.remove('dragging');
+                if (!moved) return;
+
+                suppressCarouselClick = true;
+                const closestIndex = closestCarouselIndex();
+                selectCarouselItem(closestIndex);
+                setTimeout(() => { suppressCarouselClick = false; }, 0);
+            };
+
+            carousel.addEventListener('pointerup', finishDrag);
+            carousel.addEventListener('pointercancel', finishDrag);
+        }
+
+        function handleCarouselKeydown(event) {
+            let nextIndex = currentCarouselIndex;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex += 1;
+            else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex -= 1;
+            else if (event.key === 'Home') nextIndex = 0;
+            else if (event.key === 'End') nextIndex = carouselItems.length - 1;
+            else return;
+
+            event.preventDefault();
+            selectCarouselItem(nextIndex, { focus: true });
+        }
+
+        function handleTabKeydown(event) {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            let mode;
+            if (event.key === 'Home') mode = 'card';
+            else if (event.key === 'End') mode = 'sticker';
+            else mode = event.currentTarget.id === 'tab-card' ? 'sticker' : 'card';
+            switchMode(mode);
+            requestAnimationFrame(() => document.getElementById(`tab-${mode}`).focus());
+        }
+
+        function hideAllBackgrounds() {
+            skins.forEach((_, i) => { document.getElementById('bg-' + i).style.opacity = 0; });
+            const video = document.getElementById('bg-video');
+            video.style.opacity = 0;
+            video.pause();
+            stickers.forEach((_, i) => { document.getElementById('bg-sticker-' + i).style.opacity = 0; });
+        }
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        function applyStickerPose(rot, scale, topPct, phoneOpacity, phoneScale, phoneBlur, rotatePhone) {
+            const floatEl = document.getElementById('sticker-float');
+            const phoneEl = document.getElementById('sticker-phone');
+            if (!floatEl || !phoneEl) return;
+
+            const rotY = rot + stickerShakeRot;
+            floatEl.style.top = topPct + '%';
+            floatEl.style.transform = `translate(-50%, -50%) rotateY(${rotY}deg) scale(${scale})`;
+            const phoneRot = rotatePhone ? rotY : 0;
+            phoneEl.style.opacity = phoneOpacity;
+            phoneEl.style.transform = `translateX(-50%) rotateY(${phoneRot}deg) scale(${phoneScale})`;
+            phoneEl.style.filter = phoneBlur > 0.1 ? `blur(${phoneBlur}px)` : 'none';
+        }
+
+        function refreshStickerPose() {
+            if (stickerInteractState === 'landed') {
+                applyStickerPose(
+                    STICKER_LAND.landedRot, STICKER_LAND.landedScale, STICKER_LAND.landedTop,
+                    1, STICKER_LAND.phoneScaleEnd, 0, true
+                );
+            } else {
+                applyStickerPose(
+                    stickerDragRot, stickerDragScale, STICKER_LAND.idleTop,
+                    0, STICKER_LAND.phoneScaleStart, STICKER_LAND.phoneBlurMax, false
+                );
+            }
+        }
+
+        function resetStickerInteraction() {
+            if (stickerAnimFrame) cancelAnimationFrame(stickerAnimFrame);
+            stickerAnimFrame = null;
+            stickerShakeRot = 0;
+            stickerInteractState = 'idle';
+            stickerDragRot = 0;
+            stickerDragScale = 1;
+            applyStickerPose(0, 1, STICKER_LAND.idleTop, 0, STICKER_LAND.phoneScaleStart, STICKER_LAND.phoneBlurMax, false);
+            updateStickerAccessibility(false);
+        }
+
+        function snapStickerLanded() {
+            stickerInteractState = 'landed';
+            stickerDragRot = STICKER_LAND.landedRot;
+            stickerDragScale = STICKER_LAND.landedScale;
+            applyStickerPose(
+                STICKER_LAND.landedRot, STICKER_LAND.landedScale, STICKER_LAND.landedTop,
+                1, STICKER_LAND.phoneScaleEnd, 0, true
+            );
+            updateStickerAccessibility(true);
+        }
+
+        function snapStickerIdle() {
+            stickerInteractState = 'idle';
+            stickerDragRot = 0;
+            stickerDragScale = 1;
+            applyStickerPose(0, 1, STICKER_LAND.idleTop, 0, STICKER_LAND.phoneScaleStart, STICKER_LAND.phoneBlurMax, false);
+            updateStickerAccessibility(false);
+        }
+
+        function updateStickerAccessibility(isLanded) {
+            const stage = document.getElementById('sticker-stage');
+            if (!stage) return;
+            stage.setAttribute('aria-pressed', String(isLanded));
+            stage.setAttribute('aria-label', isLanded ? 'Снять стикер с телефона' : 'Приклеить стикер на телефон');
+        }
+
+        function handleStickerKeydown(event) {
+            if ((event.key !== 'Enter' && event.key !== ' ') || stickerInteractState === 'animating') return;
+            event.preventDefault();
+            if (stickerInteractState === 'landed') playStickerUnland();
+            else playStickerLanding();
+        }
+
+        function playStickerLanding() {
+            if (stickerAnimFrame) cancelAnimationFrame(stickerAnimFrame);
+            if (prefersReducedMotion) {
+                snapStickerLanded();
+                return;
+            }
+            stickerInteractState = 'animating';
+
+            const startRot = stickerDragRot;
+            const startScale = stickerDragScale;
+            const duration = STICKER_LAND.animDuration;
+            const t0 = performance.now();
+            const { phoneScaleStart, phoneScaleEnd, phoneBlurMax } = STICKER_LAND;
+
+            haptic(8);
+
+            function frame(now) {
+                const p = Math.min(1, (now - t0) / duration);
+                const e = easeOutCubic(p);
+
+                const rot = startRot * (1 - e) + STICKER_LAND.landedRot * e;
+                const top = STICKER_LAND.idleTop + (STICKER_LAND.landedTop - STICKER_LAND.idleTop) * e;
+                const scale = startScale + (STICKER_LAND.landedScale - startScale) * e;
+                const phoneOpacity = e;
+                const phoneScale = phoneScaleStart + (phoneScaleEnd - phoneScaleStart) * e;
+                const phoneBlur = phoneBlurMax * (1 - e);
+
+                applyStickerPose(rot, scale, top, phoneOpacity, phoneScale, phoneBlur, e > 0.05);
+
+                if (p < 1) {
+                    stickerAnimFrame = requestAnimationFrame(frame);
+                } else {
+                    stickerAnimFrame = null;
+                    snapStickerLanded();
+                }
+            }
+            stickerAnimFrame = requestAnimationFrame(frame);
+        }
+
+        function playStickerUnland() {
+            if (stickerAnimFrame) cancelAnimationFrame(stickerAnimFrame);
+            if (prefersReducedMotion) {
+                snapStickerIdle();
+                return;
+            }
+            stickerInteractState = 'animating';
+
+            const startRot = stickerDragRot;
+            const startScale = stickerDragScale;
+            const duration = STICKER_LAND.animDuration;
+            const t0 = performance.now();
+            const { phoneScaleStart, phoneScaleEnd, phoneBlurMax, peakScale } = STICKER_LAND;
+
+            haptic(8);
+
+            function frame(now) {
+                const p = Math.min(1, (now - t0) / duration);
+                const e = easeOutCubic(p);
+
+                const rot = startRot * (1 - e);
+                const top = STICKER_LAND.landedTop + (STICKER_LAND.idleTop - STICKER_LAND.landedTop) * e;
+
+                let scale;
+                if (p < 0.45) {
+                    const t = easeOutCubic(p / 0.45);
+                    scale = startScale + (peakScale - startScale) * t;
+                } else {
+                    const t = easeOutCubic((p - 0.45) / 0.55);
+                    scale = peakScale + (1 - peakScale) * t;
+                }
+
+                const phoneOpacity = 1 - e;
+                const phoneScale = phoneScaleEnd + (phoneScaleStart - phoneScaleEnd) * e;
+                const phoneBlur = phoneBlurMax * e;
+
+                applyStickerPose(rot, scale, top, phoneOpacity, phoneScale, phoneBlur, phoneOpacity > 0.05);
+
+                if (p < 1) {
+                    stickerAnimFrame = requestAnimationFrame(frame);
+                } else {
+                    stickerAnimFrame = null;
+                    snapStickerIdle();
+                }
+            }
+            stickerAnimFrame = requestAnimationFrame(frame);
+        }
+
+        function stickerDragUpdate(deltaX) {
+            const dragRot = deltaX * STICKER_LAND.rotPerPx;
+
+            if (stickerDragFromLanded) {
+                stickerDragRot = STICKER_LAND.landedRot + Math.max(-STICKER_LAND.maxRotY, Math.min(STICKER_LAND.maxRotY, dragRot));
+                stickerDragScale = STICKER_LAND.landedScale;
+                applyStickerPose(
+                    stickerDragRot, stickerDragScale, STICKER_LAND.landedTop,
+                    1, STICKER_LAND.phoneScaleEnd, 0, true
+                );
+            } else {
+                const rotY = Math.max(-STICKER_LAND.maxRotY, Math.min(STICKER_LAND.maxRotY, dragRot));
+                const t = Math.abs(rotY) / STICKER_LAND.maxRotY;
+                stickerDragRot = rotY;
+                stickerDragScale = 1 + STICKER_LAND.maxScaleBoost * t;
+                applyStickerPose(stickerDragRot, stickerDragScale, STICKER_LAND.idleTop, 0, STICKER_LAND.phoneScaleStart, STICKER_LAND.phoneBlurMax, false);
+            }
+        }
+
+        function stickerDragEnd(deltaX) {
+            if (Math.abs(deltaX) >= STICKER_LAND.dragThreshold) {
+                if (stickerDragFromLanded) playStickerUnland();
+                else playStickerLanding();
+            } else if (stickerDragFromLanded) {
+                snapStickerLanded();
+            } else {
+                snapStickerIdle();
+            }
+        }
+
+        function setupStickerInteraction() {
+            const stage = document.getElementById('sticker-stage');
+            if (!stage) return;
+
+            let dragging = false;
+            let startX = 0;
+
+            const onStart = (clientX) => {
+                if (stickerInteractState === 'animating') return;
+                stickerDragFromLanded = stickerInteractState === 'landed';
+                dragging = true;
+                startX = clientX;
+                stickerInteractState = 'dragging';
+            };
+
+            const onMove = (clientX) => {
+                if (!dragging) return;
+                stickerDragUpdate(clientX - startX);
+            };
+
+            const onEnd = (clientX) => {
+                if (!dragging) return;
+                dragging = false;
+                const delta = clientX - startX;
+                stickerDragEnd(delta);
+            };
+
+            stage.addEventListener('touchstart', e => {
+                e.preventDefault();
+                onStart(e.touches[0].clientX);
+            }, { passive: false });
+
+            stage.addEventListener('touchmove', e => {
+                if (!dragging) return;
+                e.preventDefault();
+                onMove(e.touches[0].clientX);
+            }, { passive: false });
+
+            stage.addEventListener('touchend', e => {
+                onEnd(e.changedTouches[0].clientX);
+            });
+
+            stage.addEventListener('mousedown', e => {
+                onStart(e.clientX);
+                const onMouseMove = ev => onMove(ev.clientX);
+                const onMouseUp = ev => {
+                    onEnd(ev.clientX);
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                };
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            });
+
+            stage.addEventListener('keydown', handleStickerKeydown);
+        }
+
+        function shakeSticker(direction) {
+            if (prefersReducedMotion) return;
+            if (stickerShakeFrame) cancelAnimationFrame(stickerShakeFrame);
+            const duration = 350;
+            const startTime = performance.now();
+            const dipDeg = 7 * direction;
+
+            function anim(time) {
+                const progress = (time - startTime) / duration;
+                if (progress < 1) {
+                    stickerShakeRot = dipDeg * Math.sin(progress * Math.PI);
+                    refreshStickerPose();
+                    stickerShakeFrame = requestAnimationFrame(anim);
+                } else {
+                    stickerShakeRot = 0;
+                    stickerShakeFrame = null;
+                    refreshStickerPose();
+                }
+            }
+            stickerShakeFrame = requestAnimationFrame(anim);
+        }
+
+        function selectSticker(index) {
+            const changed = currentSticker !== index;
+            const dir = index > currentSticker ? 1 : -1;
+            currentSticker = index;
+            const s = stickers[index];
+
+            if (changed) {
+                document.getElementById('sticker-img').src = s.src;
+                document.getElementById('sticker-phone').src = s.phone;
+                resetStickerInteraction();
+            }
+
+            hideAllBackgrounds();
+            document.getElementById('bg-sticker-' + index).style.opacity = 1;
+            document.getElementById('theme-color').setAttribute('content', s.themeColor);
+            if (changed) {
+                haptic(5);
+                shakeSticker(dir);
+            }
+        }
+        
+        function selectSkin(index) {
+            const changed = currentSkin !== index;
+            const dir = index > currentSkin ? 1 : -1;
+            currentSkin = index;
+            hideAllBackgrounds();
+            if (!videoSkins.includes(index)) {
+                document.getElementById('bg-' + index).style.opacity = 1;
+            } else {
+                const video = document.getElementById('bg-video');
+                video.style.opacity = 1;
+                if (!prefersReducedMotion) video.play().catch(() => {});
+            }
+            document.getElementById('theme-color').setAttribute('content', themeColors[index]);
+            if (changed) {
+                updateTextures();
+                updateCardGeometry(index);
+                haptic(5);
+                shakeCard(dir);
+            }
+        }
+        
+        function shakeCard(direction) {
+            if (prefersReducedMotion) return;
+            if (cardShakeFrame) cancelAnimationFrame(cardShakeFrame);
+            const duration = 350, startTime = performance.now();
+            const intensity = 0.04, dipIntensity = 0.12 * direction;
+            
+            function animate(time) {
+                const progress = (time - startTime) / duration;
+                if (progress < 1) {
+                    shakeOffset.y = dipIntensity * Math.sin(progress * Math.PI);
+                    shakeOffset.x = (Math.random() - 0.5) * intensity * (1 - progress);
+                    cardShakeFrame = requestAnimationFrame(animate);
+                } else {
+                    shakeOffset.x = shakeOffset.y = 0;
+                    cardShakeFrame = null;
+                }
+            }
+            cardShakeFrame = requestAnimationFrame(animate);
+        }
+        
+        // Initial hint animation - rotate Y axis to show card is interactive
+        function playHintAnimation() {
+            if (prefersReducedMotion) return;
+            const duration = 1200; // ms
+            const maxAngle = 35 * Math.PI / 180; // 35 degrees in radians
+            let startTime = null;
+            
+            function animate(time) {
+                if (startTime === null) startTime = time; // Set start time on first frame
+                const elapsed = time - startTime;
+                const progress = elapsed / duration;
+                
+                if (progress < 1) {
+                    // Smooth out-and-back using sine wave
+                    hintRotationY = maxAngle * Math.sin(progress * Math.PI);
+                    requestAnimationFrame(animate);
+                } else {
+                    hintRotationY = 0;
+                }
+            }
+            
+            // Start after a small delay so user sees the card first
+            setTimeout(() => requestAnimationFrame(animate), 600);
+        }
+            
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentMode === 'card') render();
+        }
+        
+        // Start
+        init();
+        setupStickerInteraction();
+        resetStickerInteraction();
+        selectCarouselItem(0, { scroll: false, announce: false });
+        playHintAnimation();
+    </script>
+</body>
+</html>
