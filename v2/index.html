@@ -1,0 +1,3981 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#DEE0E4" id="theme-color">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Заказ карты</title>
+    <script>
+        document.documentElement.dataset.preview = 'vertical-wheel';
+    </script>
+    <style>
+        @font-face {
+            font-family: 'YSText';
+            src: url('../fonts/YSText-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'YSText';
+            src: url('../fonts/YSText-Medium.ttf') format('truetype');
+            font-weight: 500;
+        }
+
+        :root {
+            --action-bg: rgb(46, 46, 51);
+            --action-fg: rgba(255, 255, 255, 0.98);
+            --control-radius: 16px;
+            --focus-ring: rgba(46, 46, 51, 0.88);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'YSText', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: rgb(222, 224, 228);
+        }
+
+        .container {
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center;
+            padding: 12px 8px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            height: calc(56px + env(safe-area-inset-top));
+        }
+
+        .header-btn {
+            justify-self: start;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.48);
+            border: none;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 1px rgba(46, 46, 51, 0.06);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            cursor: pointer;
+        }
+
+        .header-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: rgba(0, 0, 0, 0.86);
+        }
+
+        .header-tabs {
+            justify-self: center;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-width: 190px;
+            padding: 3px;
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.64);
+            border-radius: var(--control-radius);
+            box-shadow: inset 0 0 0 1px rgba(46, 46, 51, 0.08);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+        }
+
+        .header-tab {
+            height: 38px;
+            padding: 0 20px;
+            border-radius: 13px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: inherit;
+            color: rgba(0, 0, 0, 0.62);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        color 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        transform 0.1s ease;
+            white-space: nowrap;
+        }
+
+        .header-tab.active {
+            background: var(--action-bg);
+            color: var(--action-fg);
+        }
+
+        .header-tab:active {
+            transform: scale(0.98);
+        }
+
+        .view-toggle {
+            justify-self: end;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            width: 184px;
+            height: 44px;
+            padding: 3px;
+            gap: 2px;
+            border-radius: var(--control-radius);
+            background: rgba(255, 255, 255, 0.64);
+            box-shadow: inset 0 0 0 1px rgba(46, 46, 51, 0.08);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+        }
+
+        .view-toggle-option {
+            min-width: 0;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 8px;
+            border: 0;
+            border-radius: 13px;
+            background: transparent;
+            color: rgba(0, 0, 0, 0.62);
+            font: 500 13px/1 'YSText', -apple-system, BlinkMacSystemFont, sans-serif;
+            cursor: pointer;
+            white-space: nowrap;
+            transition:
+                background-color 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+                color 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 0.1s ease;
+        }
+
+        .view-toggle-option.active {
+            background: var(--action-bg);
+            color: var(--action-fg);
+        }
+
+        .view-toggle-option:active {
+            transform: scale(0.98);
+        }
+
+        .view-toggle-icon {
+            display: none;
+            width: 22px;
+            height: 22px;
+            flex: 0 0 auto;
+        }
+
+        .header-tab:focus-visible,
+        .header-btn:focus-visible,
+        .view-toggle-option:focus-visible,
+        .order-button:focus-visible {
+            outline: 2px solid white;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        /* Card container */
+        .card-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 10px;
+            overflow: visible;
+        }
+
+        #card-canvas {
+            width: 100%;
+            max-width: 400px;
+            height: 280px;
+            touch-action: none;
+        }
+
+        #card-canvas:focus-visible,
+        .sticker-stage:focus-visible {
+            outline: 2px solid white;
+            outline-offset: -2px;
+            border-radius: 20px;
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        /* Unified design carousel */
+        .design-carousel-shell {
+            width: calc(100% - 24px);
+            max-width: 388px;
+            margin-top: 8px;
+            margin-inline: auto;
+            overflow: hidden;
+            border-radius: 24px;
+        }
+
+        .design-carousel {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 8px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.38);
+            -webkit-backdrop-filter: blur(16px) saturate(1.08);
+            backdrop-filter: blur(16px) saturate(1.08);
+            box-shadow:
+                inset 0 0 0 1px rgba(46, 46, 51, 0.07),
+                inset 0 1px 0 rgba(255, 255, 255, 0.34);
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: calc(50% - 34px);
+            overscroll-behavior-x: contain;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+        }
+
+        .design-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .design-carousel.dragging {
+            cursor: grabbing;
+            scroll-snap-type: none;
+        }
+
+        .design-option {
+            flex: 0 0 68px;
+            display: grid;
+            place-items: center;
+            width: 68px;
+            height: 56px;
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            scroll-snap-align: center;
+            transition:
+                transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1),
+                background-color 0.14s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.14s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .design-option:hover {
+                background: rgba(255, 255, 255, 0.28);
+            }
+        }
+
+        .design-option.selected {
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow:
+                inset 0 0 0 1px var(--action-bg),
+                0 2px 6px rgba(25, 20, 39, 0.08);
+        }
+
+        .design-swatch {
+            position: relative;
+            display: grid;
+            place-items: center;
+            width: 60px;
+            height: 48px;
+            pointer-events: none;
+        }
+
+        .design-thumbnail {
+            --thumbnail-width: 56px;
+            --thumbnail-scale: 1;
+            display: block;
+            width: var(--thumbnail-width);
+            max-width: none;
+            height: auto;
+            max-height: 46px;
+            object-fit: contain;
+            object-position: center;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            opacity: 1;
+            transform: scale(var(--thumbnail-scale));
+            transition:
+                opacity 0.12s ease-out,
+                transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .design-thumbnail--sticker {
+            --thumbnail-width: 52px;
+        }
+
+        .design-thumbnail--pearl {
+            --thumbnail-scale: 1.14;
+            transform-origin: center;
+        }
+
+        .design-carousel[data-view="thumbnails"] .design-swatch {
+            background: none;
+        }
+
+        .design-carousel-shell[data-view="colors"] {
+            width: 100%;
+            max-width: none;
+            margin-inline: 0;
+            border-radius: 0;
+        }
+
+        .design-carousel[data-view="colors"] {
+            gap: 18px;
+            padding: 4px 24px 8px;
+            border-radius: 0;
+            background: transparent;
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+            box-shadow: none;
+            scroll-padding-inline: calc(50% - 30px);
+        }
+
+        .design-carousel[data-view="colors"] .design-option {
+            flex: 0 0 60px;
+            display: block;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: none;
+            transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .design-carousel[data-view="colors"] .design-option::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .design-carousel[data-view="colors"] .design-option.selected::before {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+
+        .design-carousel[data-view="colors"] .design-swatch {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            display: block;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.18s ease, height 0.18s ease;
+        }
+
+        .design-carousel[data-view="colors"] .design-option.selected .design-swatch {
+            width: 52px;
+            height: 52px;
+        }
+
+        .design-carousel[data-view="colors"] .design-thumbnail {
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .design-carousel[data-view="colors"] .design-option:active {
+            transform: scale(0.94);
+        }
+
+        .design-carousel[data-view="colors"] .design-option:focus-visible {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .design-carousel[data-view="colors"] .design-option:focus-visible::before {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--focus-ring), 0 0 0 5px rgba(255, 255, 255, 0.72);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .design-carousel[data-view="colors"] .design-option:hover {
+                background: transparent;
+            }
+        }
+
+        .design-option:active {
+            transform: scale(0.97);
+        }
+
+        .design-option:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.96);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 5px var(--focus-ring);
+        }
+
+        .product-stage {
+            display: contents;
+        }
+
+        .vertical-wheel-shell {
+            display: none;
+        }
+
+        /* Query-gated concept: one large iOS-style product wheel. */
+        html[data-preview="vertical-wheel"] .view-toggle,
+        html[data-preview="vertical-wheel"] .design-carousel-shell {
+            display: none;
+        }
+
+        html[data-preview="vertical-wheel"] .container {
+            padding-bottom: calc(var(--bottom-island-height, 320px) + 12px);
+        }
+
+        html[data-preview="vertical-wheel"] .product-stage {
+            --wheel-row: 140px;
+            --wheel-face-width: 258px;
+            --wheel-perspective: 900px;
+            position: relative;
+            display: block;
+            flex: 1 1 auto;
+            width: 100%;
+            max-width: 430px;
+            min-height: 250px;
+            max-height: 480px;
+            margin-inline: auto;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        html[data-preview="vertical-wheel"] .card-area,
+        html[data-preview="vertical-wheel"] .sticker-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 5;
+            width: 100%;
+            height: 280px;
+            padding-top: 0;
+            overflow: visible;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transform-origin: center;
+            transition: opacity 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        html[data-preview="vertical-wheel"] .card-area {
+            display: flex;
+        }
+
+        html[data-preview="vertical-wheel"] .card-area.hidden,
+        html[data-preview="vertical-wheel"] .sticker-area {
+            display: none;
+        }
+
+        html[data-preview="vertical-wheel"] .sticker-area.visible {
+            display: none;
+        }
+
+        html[data-preview="vertical-wheel"] .product-stage.is-wheel-scrolling .card-area,
+        html[data-preview="vertical-wheel"] .product-stage.is-wheel-scrolling .sticker-area {
+            opacity: 0;
+        }
+
+        html[data-preview="vertical-wheel"] #card-canvas,
+        html[data-preview="vertical-wheel"] .sticker-stage {
+            pointer-events: none;
+        }
+
+        html[data-preview="vertical-wheel"] .vertical-wheel-shell:not([hidden]) {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: block;
+            overflow: hidden;
+            perspective: var(--wheel-perspective);
+        }
+
+        html[data-preview="vertical-wheel"] .vertical-wheel {
+            --wheel-pad: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+            height: 100%;
+            padding-block: var(--wheel-pad);
+            overflow-x: hidden;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-padding-block: var(--wheel-pad);
+            overscroll-behavior-y: contain;
+            touch-action: pan-y;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            -webkit-mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.24) 8%,
+                black 24%,
+                black 76%,
+                rgba(0, 0, 0, 0.24) 92%,
+                transparent 100%
+            );
+            mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.24) 8%,
+                black 24%,
+                black 76%,
+                rgba(0, 0, 0, 0.24) 92%,
+                transparent 100%
+            );
+            cursor: ns-resize;
+        }
+
+        html[data-preview="vertical-wheel"] .vertical-wheel::-webkit-scrollbar {
+            display: none;
+        }
+
+        html[data-preview="vertical-wheel"] .vertical-wheel.is-dragging {
+            scroll-snap-type: none;
+            cursor: grabbing;
+        }
+
+        html[data-preview="vertical-wheel"] .vertical-wheel.is-normalizing {
+            scroll-snap-type: none;
+            scroll-behavior: auto;
+            overflow-anchor: none;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-option {
+            position: relative;
+            z-index: 0;
+            flex: 0 0 var(--wheel-row);
+            display: grid;
+            grid-template-rows: 100%;
+            place-items: center;
+            width: 100%;
+            height: var(--wheel-row);
+            padding: 0;
+            border: 0;
+            background: transparent;
+            opacity: 0;
+            transform: perspective(var(--wheel-perspective)) translateZ(-96px) scale(0.66);
+            transform-origin: center;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            scroll-snap-align: center;
+            scroll-snap-stop: normal;
+            cursor: pointer;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-face {
+            position: relative;
+            display: block;
+            width: var(--wheel-face-width);
+            aspect-ratio: 1688 / 1064;
+            border-radius: calc(var(--wheel-face-width) * 0.05);
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            filter:
+                drop-shadow(0 12px 18px rgba(18, 17, 24, 0.12))
+                drop-shadow(0 2px 4px rgba(18, 17, 24, 0.07));
+            transition: opacity 0.1s linear;
+            pointer-events: auto;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-face > img {
+            position: absolute;
+            display: block;
+            max-width: none;
+            height: auto;
+            user-select: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-face--card > img {
+            inset: 0;
+            width: 100%;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-face--sticker-flat {
+            width: calc(var(--wheel-face-width) * 0.7666);
+            aspect-ratio: 692 / 486;
+            border-radius: calc(var(--wheel-face-width) * 0.065);
+            background: transparent;
+            filter:
+                drop-shadow(0 10px 16px rgba(18, 17, 24, 0.12))
+                drop-shadow(0 2px 4px rgba(18, 17, 24, 0.07));
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-face--sticker-flat > img {
+            inset: 0;
+            width: 100%;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-face--sticker-flat.wheel-face--pearl {
+            width: calc(var(--wheel-face-width) * 0.8733);
+            aspect-ratio: 1055 / 751;
+        }
+
+        html[data-preview="vertical-wheel"] .product-stage:not(.is-wheel-scrolling) .wheel-option.selected .wheel-face--card {
+            opacity: 0;
+        }
+
+        html[data-preview="vertical-wheel"] .wheel-option:focus-visible {
+            outline: none;
+        }
+
+        .skin-0-gradient {
+            background: linear-gradient(135deg, rgb(66, 230, 102) 0%, rgb(201, 252, 171) 100%);
+        }
+
+        .skin-1-gradient {
+            background: linear-gradient(135deg, rgb(166, 250, 204) 0%, rgb(191, 255, 212) 100%);
+        }
+
+        .skin-2-gradient {
+            background: linear-gradient(135deg, rgb(195, 200, 210) 0%, rgb(215, 220, 228) 100%);
+        }
+
+        .skin-3-gradient {
+            background: linear-gradient(135deg, rgb(230, 100, 80) 0%, rgb(240, 140, 120) 100%);
+        }
+
+        .skin-4-gradient {
+            background: linear-gradient(135deg, rgb(50, 50, 55) 0%, rgb(85, 85, 90) 100%);
+        }
+
+        .skin-yellow-gradient {
+            background: linear-gradient(135deg, rgb(247, 199, 53) 0%, rgb(255, 226, 122) 100%);
+        }
+
+        .skin-orange-gradient {
+            background: linear-gradient(135deg, rgb(244, 122, 38) 0%, rgb(255, 174, 90) 100%);
+        }
+
+        .skin-white-gradient {
+            background: linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(231, 235, 240) 100%);
+        }
+
+        .skin-pink-gradient {
+            background: linear-gradient(135deg, rgb(244, 91, 157) 0%, rgb(255, 166, 205) 100%);
+        }
+
+        .design-carousel[data-view="colors"] .skin-white-gradient {
+            box-shadow: inset 0 0 0 1px rgb(119, 124, 132);
+        }
+
+        /* Bottom island */
+        .bottom-island {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 28px 24px 24px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            z-index: 10;
+        }
+
+        .bottom-content {
+            width: min(100%, 560px);
+            margin-inline: auto;
+        }
+
+        .benefits-list {
+            display: grid;
+            gap: 14px;
+            margin: 0 0 24px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .benefit-item {
+            display: grid;
+            grid-template-columns: 56px minmax(0, 1fr);
+            align-items: center;
+            gap: 16px;
+            min-height: 56px;
+        }
+
+        .benefit-icon-frame {
+            width: 56px;
+            height: 56px;
+            display: grid;
+            place-items: center;
+        }
+
+        .benefit-icon {
+            display: block;
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+        }
+
+        .benefit-copy {
+            min-width: 0;
+        }
+
+        .benefit-title {
+            font-size: 20px;
+            font-weight: 500;
+            line-height: 1.2;
+            color: rgba(0, 0, 0, 0.86);
+            text-align: left;
+        }
+
+        .benefit-description {
+            margin-top: 2px;
+            font-size: 15px;
+            font-weight: 400;
+            line-height: 1.3;
+            color: rgba(0, 0, 0, 0.5);
+            text-align: left;
+        }
+
+        .order-button {
+            width: 100%;
+            height: 56px;
+            background: var(--action-bg);
+            border: none;
+            border-radius: var(--control-radius);
+            color: var(--action-fg);
+            font-size: 18px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
+
+        .order-button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* Sticker area */
+        .sticker-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 10px;
+            overflow: visible;
+        }
+
+        .sticker-area.visible {
+            display: flex;
+        }
+
+        .card-area.hidden {
+            display: none;
+        }
+
+        .sticker-stage {
+            /* Match the perceived 258 × 163 px WebGL card directly before it. */
+            --carrier-w: 258px;
+            --carrier-h: 163px;
+            --sticker-base-w: 130px;
+            --sticker-object-w: var(--sticker-base-w);
+            --sticker-anchor-x: -75.336px;
+            --sticker-landed-scale: 1.246;
+            width: 327px;
+            height: 280px;
+            position: relative;
+            touch-action: manipulation;
+            overflow: visible;
+            perspective: 1000px;
+            cursor: pointer;
+            isolation: isolate;
+        }
+
+        /* The pearl PNG has wider transparent margins; uniform scaling keeps
+           both original artworks the same physical size without cropping. */
+        .sticker-stage[data-variant="pearl"] {
+            --sticker-object-w: calc(var(--sticker-base-w) * 1.14);
+        }
+
+        .sticker-phone {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 312px;
+            height: auto;
+            z-index: 1;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            transform-origin: 50% 70%;
+            will-change: transform, opacity, filter;
+            transition: opacity 0.1s linear;
+        }
+
+        .sticker-phone-window {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .sticker-carrier {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: var(--carrier-w);
+            height: var(--carrier-h);
+            z-index: 2;
+            overflow: hidden;
+            border-radius: 13px;
+            background: var(--carrier-surface);
+            box-shadow:
+                0 1px 0 var(--carrier-edge),
+                0 2px 5px var(--carrier-shadow),
+                inset 0 -1px 0 var(--carrier-bevel);
+            transform-origin: 50% 50%;
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
+            transition: opacity 0.1s linear;
+        }
+
+        .sticker-carrier::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            border-radius: inherit;
+            pointer-events: none;
+            background:
+                radial-gradient(
+                    ellipse 58% 46% at 78% 8%,
+                    var(--carrier-specular) 0%,
+                    transparent 70%
+                ),
+                linear-gradient(
+                    145deg,
+                    transparent 48%,
+                    var(--carrier-shade) 100%
+                );
+        }
+
+        .sticker-carrier::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            border-radius: inherit;
+            pointer-events: none;
+            background: url('../images/plastic-grain.svg') repeat;
+            background-size: 128px 128px;
+            opacity: var(--carrier-grain-opacity);
+            mix-blend-mode: soft-light;
+        }
+
+        .sticker-carrier[data-variant="purple"] {
+            --carrier-surface:
+                radial-gradient(ellipse 90% 100% at 12% 88%, rgba(126, 90, 188, 0.24), transparent 64%),
+                linear-gradient(145deg, #5d4780 0%, #493568 56%, #30223f 100%);
+            --carrier-edge: rgba(12, 8, 20, 0.28);
+            --carrier-shadow: rgba(14, 8, 23, 0.075);
+            --carrier-bevel: rgba(13, 8, 23, 0.1);
+            --carrier-specular: rgba(255, 255, 255, 0.055);
+            --carrier-shade: rgba(12, 7, 20, 0.13);
+            --carrier-grain-opacity: 0.024;
+            --slot-gutter: rgba(12, 7, 22, 0.24);
+            --slot-surface: rgba(13, 8, 24, 0.065);
+        }
+
+        .sticker-carrier[data-variant="pearl"] {
+            --carrier-surface:
+                radial-gradient(ellipse 64% 72% at 8% 14%, rgba(242, 151, 211, 0.52), transparent 60%),
+                radial-gradient(ellipse 62% 68% at 12% 88%, rgba(166, 220, 228, 0.4), transparent 58%),
+                linear-gradient(145deg, #f6f0e9 0%, #e9ece9 56%, #dce2e3 100%);
+            --carrier-edge: rgba(57, 49, 60, 0.15);
+            --carrier-shadow: rgba(55, 44, 59, 0.055);
+            --carrier-bevel: rgba(57, 48, 60, 0.05);
+            --carrier-specular: rgba(255, 255, 255, 0.09);
+            --carrier-shade: rgba(70, 55, 72, 0.07);
+            --carrier-grain-opacity: 0.014;
+            --slot-gutter: rgba(58, 48, 62, 0.14);
+            --slot-surface: rgba(53, 45, 58, 0.032);
+        }
+
+        .sticker-carrier-slot {
+            position: absolute;
+            left: calc(50% + var(--sticker-anchor-x));
+            top: 50%;
+            width: var(--sticker-object-w);
+            z-index: 2;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            transform-origin: center;
+            pointer-events: none;
+        }
+
+        .sticker-carrier-slot::before,
+        .sticker-carrier-slot::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            transform-origin: center;
+            -webkit-mask-image: var(--slot-mask);
+            mask-image: var(--slot-mask);
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-size: 100% 100%;
+            mask-size: 100% 100%;
+            mask-mode: alpha;
+        }
+
+        .sticker-carrier-slot::before {
+            z-index: 0;
+            background: var(--slot-gutter);
+            transform: scale(1.018);
+        }
+
+        .sticker-carrier-slot::after {
+            z-index: 1;
+            background: var(--slot-surface);
+        }
+
+        .sticker-carrier[data-variant="purple"] .sticker-carrier-slot {
+            aspect-ratio: 692 / 486;
+            --slot-mask: url('../images/Pay_sticker_old.png');
+        }
+
+        .sticker-carrier[data-variant="pearl"] .sticker-carrier-slot {
+            aspect-ratio: 1055 / 751;
+            --slot-mask: url('../images/Pay_sticker.png');
+        }
+
+        .sticker-float {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 3;
+            pointer-events: none;
+            transform-style: preserve-3d;
+            transform-origin: center center;
+            will-change: transform, filter, opacity;
+            transition: opacity 0.1s linear;
+        }
+
+        .sticker-float .sticker-img {
+            width: var(--sticker-object-w);
+            height: auto;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .sticker-stage.is-resetting .sticker-phone,
+        .sticker-stage.is-resetting .sticker-carrier,
+        .sticker-stage.is-resetting .sticker-float {
+            opacity: 0 !important;
+        }
+
+
+        .sticker-0-gradient {
+            background: linear-gradient(135deg, rgb(60, 40, 90) 0%, rgb(90, 60, 130) 100%);
+        }
+
+        .sticker-1-gradient {
+            background: linear-gradient(135deg, rgb(230, 180, 200) 0%, rgb(200, 170, 220) 50%, rgb(180, 200, 230) 100%);
+        }
+
+        .background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (min-width: 640px) {
+            .design-carousel {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 639px) {
+            .header-tabs {
+                min-width: 160px;
+            }
+
+            .header-tab {
+                padding-inline: 14px;
+            }
+
+            .view-toggle {
+                grid-template-columns: repeat(2, 44px);
+                width: 92px;
+                padding: 0 2px;
+                gap: 0;
+            }
+
+            .view-toggle-option {
+                width: 44px;
+                height: 44px;
+                padding: 0;
+                border-radius: 14px;
+            }
+
+            .view-toggle-label {
+                display: none;
+            }
+
+            .view-toggle-icon {
+                display: block;
+            }
+
+            .design-carousel {
+                justify-content: flex-start;
+                padding-inline: 8px;
+                scroll-padding-inline: 8px;
+            }
+
+            .design-option {
+                flex-basis: 60px;
+                width: 60px;
+                height: 50px;
+                border-radius: 13px;
+            }
+
+            .design-swatch {
+                width: 54px;
+                height: 44px;
+            }
+
+            .design-thumbnail {
+                --thumbnail-width: 50px;
+                max-height: 42px;
+            }
+
+            .design-thumbnail--sticker {
+                --thumbnail-width: 46px;
+            }
+
+        }
+
+        @media (max-height: 700px) {
+            .header {
+                height: calc(52px + env(safe-area-inset-top));
+                padding-top: max(8px, env(safe-area-inset-top));
+                padding-bottom: 8px;
+            }
+
+            .card-area,
+            .sticker-area {
+                padding-top: 4px;
+            }
+
+            #card-canvas,
+            .sticker-stage {
+                height: 220px;
+            }
+
+            .sticker-stage {
+                --carrier-w: 202px;
+                --carrier-h: 128px;
+                --sticker-base-w: 102px;
+                --sticker-anchor-x: -58.984px;
+                --sticker-landed-scale: 1.44;
+                width: 300px;
+            }
+
+            .sticker-phone {
+                width: 278px;
+            }
+
+            .sticker-carrier {
+                border-radius: 10px;
+                box-shadow:
+                    0 1px 0 var(--carrier-edge),
+                    0 1.5px 4px var(--carrier-shadow),
+                    inset 0 -1px 0 var(--carrier-bevel);
+            }
+
+            .design-carousel-shell {
+                margin-top: 0;
+            }
+
+            .bottom-island {
+                padding: 18px 20px;
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+            }
+
+            .benefits-list {
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            .benefit-item {
+                grid-template-columns: 44px minmax(0, 1fr);
+                gap: 12px;
+                min-height: 42px;
+            }
+
+            .benefit-icon-frame {
+                width: 44px;
+                height: 42px;
+            }
+
+            .benefit-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .benefit-title {
+                font-size: 18px;
+                line-height: 1.16;
+            }
+
+            .benefit-description {
+                margin-top: 1px;
+                font-size: 14px;
+                line-height: 1.25;
+            }
+
+            .order-button {
+                height: 52px;
+            }
+        }
+
+        @media (max-height: 560px) {
+            html,
+            body {
+                height: auto;
+                min-height: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .container {
+                min-height: 100vh;
+                height: auto;
+                padding-bottom: 210px;
+            }
+
+            .header {
+                height: calc(48px + env(safe-area-inset-top));
+                padding-top: max(6px, env(safe-area-inset-top));
+                padding-bottom: 6px;
+            }
+
+            .header-btn {
+                width: 38px;
+                height: 38px;
+            }
+
+            .view-toggle {
+                height: 38px;
+                padding-block: 0;
+            }
+
+            .view-toggle-option {
+                height: 38px;
+            }
+
+            .view-toggle-icon {
+                width: 20px;
+                height: 20px;
+            }
+
+            .header-tabs {
+                min-width: 174px;
+            }
+
+            .header-tab {
+                height: 34px;
+                padding-inline: 16px;
+            }
+
+            #card-canvas,
+            .sticker-stage {
+                height: 170px;
+            }
+
+            #card-canvas {
+                max-width: 290px;
+            }
+
+            .sticker-stage {
+                --carrier-w: 156px;
+                --carrier-h: 99px;
+                --sticker-base-w: 79px;
+                --sticker-anchor-x: -45.552px;
+                --sticker-landed-scale: 1.545;
+                width: 250px;
+            }
+
+            .sticker-phone {
+                width: 230px;
+            }
+
+            .sticker-carrier {
+                border-radius: 8px;
+                box-shadow:
+                    0 1px 0 var(--carrier-edge),
+                    0 1px 3px var(--carrier-shadow),
+                    inset 0 -1px 0 var(--carrier-bevel);
+            }
+
+            .sticker-carrier,
+            .sticker-float {
+                top: 50%;
+            }
+
+            .design-carousel {
+                gap: 6px;
+                padding-block: 6px;
+            }
+
+            .design-option {
+                flex-basis: 58px;
+                width: 58px;
+                height: 46px;
+                border-radius: 12px;
+            }
+
+            .design-swatch {
+                width: 52px;
+                height: 40px;
+            }
+
+            .design-thumbnail {
+                --thumbnail-width: 48px;
+                max-height: 38px;
+            }
+
+            .design-thumbnail--sticker {
+                --thumbnail-width: 44px;
+            }
+
+            .design-carousel[data-view="colors"] {
+                gap: 14px;
+                padding-block: 2px 4px;
+            }
+
+            .design-carousel[data-view="colors"] .design-option,
+            .design-carousel[data-view="colors"] .design-option::before {
+                width: 50px;
+                height: 50px;
+            }
+
+            .design-carousel[data-view="colors"] .design-option {
+                flex-basis: 50px;
+            }
+
+            .design-carousel[data-view="colors"] .design-swatch {
+                width: 50px;
+                height: 50px;
+            }
+
+            .design-carousel[data-view="colors"] .design-option.selected .design-swatch {
+                width: 44px;
+                height: 44px;
+            }
+
+            .bottom-island {
+                padding: 12px 20px;
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+                border-radius: 20px 20px 0 0;
+            }
+
+            .benefits-list {
+                gap: 6px;
+                margin-bottom: 10px;
+            }
+
+            .benefit-item {
+                grid-template-columns: 38px minmax(0, 1fr);
+                gap: 10px;
+                min-height: 36px;
+            }
+
+            .benefit-icon-frame {
+                width: 38px;
+                height: 36px;
+            }
+
+            .benefit-icon {
+                width: 34px;
+                height: 34px;
+            }
+
+            .benefit-title {
+                font-size: 16px;
+                line-height: 1.15;
+            }
+
+            .benefit-description {
+                margin-top: 0;
+                font-size: 12.5px;
+                line-height: 1.2;
+            }
+
+            .order-button {
+                height: 44px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 359px) {
+            .header {
+                padding-inline: 4px;
+            }
+
+            .header-tabs {
+                min-width: 128px;
+            }
+
+            .header-tab {
+                padding-inline: 8px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            html[data-preview="vertical-wheel"] .container {
+                padding-bottom: calc(var(--bottom-island-height, 248px) + 10px);
+            }
+
+            html[data-preview="vertical-wheel"] .product-stage {
+                --wheel-row: 106px;
+                --wheel-face-width: 202px;
+                --wheel-perspective: 780px;
+                max-height: none;
+            }
+        }
+
+        @media (max-height: 560px) {
+            html[data-preview="vertical-wheel"],
+            html[data-preview="vertical-wheel"] body {
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            html[data-preview="vertical-wheel"] .container {
+                height: 100%;
+                min-height: 0;
+                padding-bottom: calc(var(--bottom-island-height, 196px) + 8px);
+            }
+
+            html[data-preview="vertical-wheel"] .product-stage {
+                --wheel-row: 90px;
+                --wheel-face-width: 204px;
+                --wheel-perspective: 760px;
+                min-height: 210px;
+            }
+
+            html[data-preview="vertical-wheel"] #card-canvas,
+            html[data-preview="vertical-wheel"] .sticker-stage,
+            html[data-preview="vertical-wheel"] .card-area,
+            html[data-preview="vertical-wheel"] .sticker-area {
+                height: 210px;
+            }
+
+            html[data-preview="vertical-wheel"] .sticker-stage {
+                --carrier-w: 190px;
+                --carrier-h: 120px;
+                --sticker-base-w: 96px;
+                --sticker-anchor-x: -55.48px;
+                --sticker-landed-scale: 1.47;
+                width: 280px;
+            }
+
+            html[data-preview="vertical-wheel"] .sticker-phone {
+                width: 258px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .background-video,
+            .header-tab,
+            .view-toggle-option,
+            .design-option,
+            .design-option::before,
+            .design-swatch,
+            .design-thumbnail,
+            .order-button {
+                transition-duration: 0.01ms !important;
+            }
+
+            .sticker-phone,
+            .sticker-carrier,
+            .sticker-float {
+                transition-duration: 0.06s !important;
+            }
+
+            .design-carousel {
+                scroll-behavior: auto;
+            }
+
+            html[data-preview="vertical-wheel"] .wheel-option {
+                transition-duration: 0.01ms !important;
+            }
+
+            html[data-preview="vertical-wheel"] .card-area,
+            html[data-preview="vertical-wheel"] .sticker-area,
+            html[data-preview="vertical-wheel"] .wheel-face {
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- One shared visual scene for every card and sticker design. -->
+    <video class="background-video" id="bg-video" style="opacity: 1;" loop muted playsinline poster="../images/bg_pay_poster.png" src="../images/bg_pay.mp4"></video>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <button class="header-btn" type="button" aria-label="Назад">
+                <svg viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <div class="header-tabs" role="tablist" aria-label="Тип продукта">
+                <button class="header-tab active" id="tab-card" type="button" role="tab" aria-selected="true" aria-controls="card-area">Карта</button>
+                <button class="header-tab" id="tab-sticker" type="button" role="tab" aria-selected="false" aria-controls="sticker-area" tabindex="-1">Стикер</button>
+            </div>
+            <div class="view-toggle" id="carousel-view-toggle" role="group" aria-label="Вид карусели" aria-controls="design-carousel">
+                <button class="view-toggle-option" type="button" data-carousel-view="colors" aria-pressed="false" aria-label="Цвета" title="Цвета" tabindex="-1">
+                    <svg class="view-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="7.5" cy="8" r="3.5" fill="#C7CED7"/>
+                        <circle cx="15.7" cy="9.2" r="3.5" fill="#FF5538"/>
+                        <circle cx="10.8" cy="16.2" r="3.5" fill="#6B4CA4"/>
+                    </svg>
+                    <span class="view-toggle-label">Цвета</span>
+                </button>
+                <button class="view-toggle-option active" type="button" data-carousel-view="thumbnails" aria-pressed="true" aria-label="Миниатюры" title="Миниатюры" tabindex="0">
+                    <svg class="view-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3.5" y="5.5" width="17" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                        <circle cx="8.5" cy="10" r="1.6" fill="currentColor"/>
+                        <path d="M5.8 16l4-4 3.1 2.9 2.3-2.2 3.1 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="view-toggle-label">Миниатюры</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="product-stage" id="product-stage">
+        <!-- Card area -->
+        <div class="card-area" id="card-area" role="tabpanel" aria-labelledby="tab-card">
+            <canvas id="card-canvas" tabindex="0" role="button" aria-label="Показать оборот карты" aria-pressed="false"></canvas>
+        </div>
+
+        <!-- Sticker area -->
+        <div class="sticker-area" id="sticker-area" role="tabpanel" aria-labelledby="tab-sticker" aria-hidden="true">
+            <div class="sticker-stage" id="sticker-stage" tabindex="0" role="button" aria-label="Достать стикер из пластиковой карты и приклеить на телефон" aria-pressed="false" data-state="in-card" data-variant="purple">
+                <div class="sticker-phone-window" aria-hidden="true">
+                    <img class="sticker-phone" id="sticker-phone" src="../images/Phone_back_empty.png" alt="">
+                </div>
+                <div class="sticker-carrier" id="sticker-carrier" data-variant="purple" aria-hidden="true">
+                    <span class="sticker-carrier-slot"></span>
+                </div>
+                <div class="sticker-float" id="sticker-float">
+                    <img class="sticker-img" id="sticker-img" src="../images/Pay_sticker_old.png" alt="">
+                </div>
+                <span class="visually-hidden" id="sticker-status" aria-live="polite"></span>
+            </div>
+        </div>
+
+        <!-- One carousel for every card and sticker design -->
+        <nav class="design-carousel-shell" id="design-carousel-shell" aria-label="Дизайны карты и стикера" data-view="thumbnails">
+            <div class="design-carousel" id="design-carousel" role="listbox" aria-orientation="horizontal" aria-label="Выберите дизайн" data-view="thumbnails">
+                <button class="design-option selected" type="button" role="option" aria-selected="true" aria-label="Карта, серебряный дизайн, 1 из 9" data-design-index="0" tabindex="0">
+                    <span class="design-swatch skin-2-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, красный дизайн, 2 из 9" data-design-index="1" tabindex="-1">
+                    <span class="design-swatch skin-3-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front red.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, чёрный дизайн, 3 из 9" data-design-index="2" tabindex="-1">
+                    <span class="design-swatch skin-4-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front black.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, жёлтый дизайн, 4 из 9" data-design-index="3" tabindex="-1">
+                    <span class="design-swatch skin-yellow-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front yellow.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, оранжевый дизайн, 5 из 9" data-design-index="4" tabindex="-1">
+                    <span class="design-swatch skin-orange-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front orange.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, белый дизайн, 6 из 9" data-design-index="5" tabindex="-1">
+                    <span class="design-swatch skin-white-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front white.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Карта, розовый дизайн, 7 из 9" data-design-index="6" tabindex="-1">
+                    <span class="design-swatch skin-pink-gradient" aria-hidden="true">
+                        <img class="design-thumbnail" src="../images/Pay front pink.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, фиолетовый дизайн, 8 из 9" data-design-index="7" tabindex="-1">
+                    <span class="design-swatch sticker-0-gradient" aria-hidden="true">
+                        <img class="design-thumbnail design-thumbnail--sticker" src="../images/Pay_sticker_old.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+                <button class="design-option" type="button" role="option" aria-selected="false" aria-label="Стикер, перламутровый дизайн, 9 из 9" data-design-index="8" tabindex="-1">
+                    <span class="design-swatch sticker-1-gradient" aria-hidden="true">
+                        <img class="design-thumbnail design-thumbnail--sticker design-thumbnail--pearl" src="../images/Pay_sticker.png" alt="" draggable="false" decoding="sync">
+                    </span>
+                </button>
+            </div>
+            <span class="visually-hidden" id="carousel-status" aria-live="polite"></span>
+        </nav>
+
+        <!-- Built only for the query-gated vertical wheel concept. -->
+        <nav class="vertical-wheel-shell" id="vertical-wheel-shell" aria-label="Дизайны карты и стикера" hidden>
+            <div class="vertical-wheel" id="vertical-wheel" role="listbox" aria-orientation="vertical" aria-label="Выберите дизайн"></div>
+            <span class="visually-hidden" id="vertical-wheel-status" aria-live="polite"></span>
+        </nav>
+        </main>
+
+        <!-- Bottom island -->
+        <div class="bottom-island">
+            <div class="bottom-content">
+                <h1 class="visually-hidden" id="bottom-title">Карта</h1>
+                <ul class="benefits-list">
+                    <li class="benefit-item">
+                        <span class="benefit-icon-frame" aria-hidden="true">
+                            <img class="benefit-icon" src="../images/benefit-free.png" alt="">
+                        </span>
+                        <div class="benefit-copy">
+                            <p class="benefit-title">Совсем бесплатная</p>
+                            <p class="benefit-description">0 ₽ за выпуск и обслуживание</p>
+                        </div>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon-frame" aria-hidden="true">
+                            <img class="benefit-icon" src="../images/benefit-cashback.png" alt="">
+                        </span>
+                        <div class="benefit-copy">
+                            <p class="benefit-title">Кешбэк до 50%</p>
+                            <p class="benefit-description">Баллами Плюса в категориях месяца</p>
+                        </div>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon-frame" aria-hidden="true">
+                            <img class="benefit-icon benefit-icon--market" src="../images/market-kyc-pvz.png" alt="">
+                        </span>
+                        <div class="benefit-copy">
+                            <p class="benefit-title">Доставим в ПВЗ</p>
+                            <p class="benefit-description">Который для вас удобнее всего</p>
+                        </div>
+                    </li>
+                </ul>
+                <button class="order-button" id="order-button">Заказать бесплатно</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pure WebGL - NO EXTERNAL DEPENDENCIES -->
+    <script>
+        'use strict';
+
+        const isVerticalWheelPreview =
+            document.documentElement.dataset.preview === 'vertical-wheel';
+        let verticalWheelController = null;
+        let verticalWheelScrolling = false;
+        
+        // ============================================
+        // PURE WEBGL IMPLEMENTATION - NO LIBRARIES
+        // ============================================
+
+        // Card skins configuration
+        // cornerRadius — скругление лицевой/задней плоскости и рёбер (подложки между ними)
+        const skins = [
+            { front: '../images/Pay front.png', back: '../images/Pay back silver.png', mask: '../images/Pay mask.png', edge: [0.85, 0.85, 0.85], holographic: true, cornerRadius: 0.16 },
+            { front: '../images/Pay front red.png', back: '../images/Pay back red.png', mask: '../images/Pay mask.png', edge: [0.85, 0.85, 0.85], holographic: true, cornerRadius: 0.16 },
+            { front: '../images/Pay front black.png', back: '../images/Pay back black.png', mask: '../images/Pay mask.png', edge: [0.15, 0.15, 0.17], holographic: true, cornerRadius: 0.16 },
+            { front: '../images/Pay front yellow.png', back: '../images/Pay back yellow.png', mask: '../images/Pay mask.png', edge: [0.90, 0.73, 0.12], holographic: true, holoMaterial: { strength: 0.42, saturation: 0.28, physicalFoil: 1.0, foilPower: 52.0, matteSpecScale: 0.25 }, cornerRadius: 0.16 },
+            { front: '../images/Pay front orange.png', back: '../images/Pay back orange.png', mask: '../images/Pay mask.png', edge: [0.92, 0.39, 0.12], holographic: true, holoMaterial: { strength: 0.34, saturation: 0.18, physicalFoil: 1.0, foilPower: 64.0, matteSpecScale: 0.15 }, cornerRadius: 0.16 },
+            { front: '../images/Pay front white.png', back: '../images/Pay back white.png', mask: '../images/Pay mask.png', edge: [0.80, 0.82, 0.85], holographic: false, cornerRadius: 0.16 },
+            { front: '../images/Pay front pink.png', back: '../images/Pay back pink.png', mask: '../images/Pay mask.png', edge: [0.86, 0.31, 0.54], holographic: false, cornerRadius: 0.16 }
+        ];
+
+        let currentSkin = 0;
+        let gl, canvas;
+        let frontProgram, backProgram, edgeProgram, holoProgram;
+        let frontVAO, backVAO, edgeVAO;
+        let frontTexture, backTexture, maskTexture;
+        const textureCache = new Map();
+        const textureSourceCache = new Map();
+        const textureReadyCache = new Map();
+        const geometryCache = new Map();
+        let projectionMatrix, viewMatrix, modelMatrix;
+        let rotationY = 0, targetRotationY = 0, lastRotationY = 0;
+        let isDragging = false, startX = 0, isShowingBack = false;
+        let shakeOffset = { x: 0, y: 0, z: 0 };
+        let hintRotationY = 0; // For initial hint animation
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function haptic(duration) {
+            if (!prefersReducedMotion && navigator.vibrate) navigator.vibrate(duration);
+        }
+        let edgeIndexCount = 0;
+
+        // ============================================
+        // MATRIX MATH UTILITIES
+        // ============================================
+        
+        const mat4 = {
+            create: () => new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+            
+            perspective: (out, fovy, aspect, near, far) => {
+                const f = 1.0 / Math.tan(fovy / 2);
+                out[0] = f / aspect; out[1] = 0; out[2] = 0; out[3] = 0;
+                out[4] = 0; out[5] = f; out[6] = 0; out[7] = 0;
+                out[8] = 0; out[9] = 0; out[10] = (far + near) / (near - far); out[11] = -1;
+                out[12] = 0; out[13] = 0; out[14] = (2 * far * near) / (near - far); out[15] = 0;
+                return out;
+            },
+            
+            identity: (out) => {
+                out[0] = 1; out[1] = 0; out[2] = 0; out[3] = 0;
+                out[4] = 0; out[5] = 1; out[6] = 0; out[7] = 0;
+                out[8] = 0; out[9] = 0; out[10] = 1; out[11] = 0;
+                out[12] = 0; out[13] = 0; out[14] = 0; out[15] = 1;
+                return out;
+            },
+            
+            translate: (out, a, v) => {
+                const x = v[0], y = v[1], z = v[2];
+                out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
+                out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
+                out[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
+                out[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
+                if (out !== a) { out[0]=a[0]; out[1]=a[1]; out[2]=a[2]; out[3]=a[3];
+                    out[4]=a[4]; out[5]=a[5]; out[6]=a[6]; out[7]=a[7];
+                    out[8]=a[8]; out[9]=a[9]; out[10]=a[10]; out[11]=a[11]; }
+                return out;
+            },
+
+            rotateX: (out, a, rad) => {
+                const s = Math.sin(rad), c = Math.cos(rad);
+                const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+                const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+                if (out !== a) { out[0]=a[0]; out[1]=a[1]; out[2]=a[2]; out[3]=a[3];
+                    out[12]=a[12]; out[13]=a[13]; out[14]=a[14]; out[15]=a[15]; }
+                out[4] = a10*c + a20*s; out[5] = a11*c + a21*s; out[6] = a12*c + a22*s; out[7] = a13*c + a23*s;
+                out[8] = a20*c - a10*s; out[9] = a21*c - a11*s; out[10] = a22*c - a12*s; out[11] = a23*c - a13*s;
+                return out;
+            },
+            
+            rotateY: (out, a, rad) => {
+                const s = Math.sin(rad), c = Math.cos(rad);
+                const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+                const a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11];
+                if (out !== a) { out[4]=a[4]; out[5]=a[5]; out[6]=a[6]; out[7]=a[7];
+                    out[12]=a[12]; out[13]=a[13]; out[14]=a[14]; out[15]=a[15]; }
+                out[0] = a00*c - a20*s; out[1] = a01*c - a21*s; out[2] = a02*c - a22*s; out[3] = a03*c - a23*s;
+                out[8] = a00*s + a20*c; out[9] = a01*s + a21*c; out[10] = a02*s + a22*c; out[11] = a03*s + a23*c;
+                return out;
+            },
+            
+            rotateZ: (out, a, rad) => {
+                const s = Math.sin(rad), c = Math.cos(rad);
+                const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3];
+                const a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7];
+                if (out !== a) { out[8]=a[8]; out[9]=a[9]; out[10]=a[10]; out[11]=a[11];
+                    out[12]=a[12]; out[13]=a[13]; out[14]=a[14]; out[15]=a[15]; }
+                out[0] = a00*c + a10*s; out[1] = a01*c + a11*s; out[2] = a02*c + a12*s; out[3] = a03*c + a13*s;
+                out[4] = a10*c - a00*s; out[5] = a11*c - a01*s; out[6] = a12*c - a02*s; out[7] = a13*c - a03*s;
+                return out;
+            },
+            
+            multiply: (out, a, b) => {
+                const a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7];
+                const a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+                let b0=b[0],b1=b[1],b2=b[2],b3=b[3];
+                out[0]=b0*a00+b1*a10+b2*a20+b3*a30; out[1]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[2]=b0*a02+b1*a12+b2*a22+b3*a32; out[3]=b0*a03+b1*a13+b2*a23+b3*a33;
+                b0=b[4];b1=b[5];b2=b[6];b3=b[7];
+                out[4]=b0*a00+b1*a10+b2*a20+b3*a30; out[5]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[6]=b0*a02+b1*a12+b2*a22+b3*a32; out[7]=b0*a03+b1*a13+b2*a23+b3*a33;
+                b0=b[8];b1=b[9];b2=b[10];b3=b[11];
+                out[8]=b0*a00+b1*a10+b2*a20+b3*a30; out[9]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[10]=b0*a02+b1*a12+b2*a22+b3*a32; out[11]=b0*a03+b1*a13+b2*a23+b3*a33;
+                b0=b[12];b1=b[13];b2=b[14];b3=b[15];
+                out[12]=b0*a00+b1*a10+b2*a20+b3*a30; out[13]=b0*a01+b1*a11+b2*a21+b3*a31;
+                out[14]=b0*a02+b1*a12+b2*a22+b3*a32; out[15]=b0*a03+b1*a13+b2*a23+b3*a33;
+                return out;
+            },
+            
+            normalFromMat4: (out, a) => {
+                const a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7];
+                const a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+                const b00=a00*a11-a01*a10, b01=a00*a12-a02*a10, b02=a00*a13-a03*a10;
+                const b03=a01*a12-a02*a11, b04=a01*a13-a03*a11, b05=a02*a13-a03*a12;
+                const b06=a20*a31-a21*a30, b07=a20*a32-a22*a30, b08=a20*a33-a23*a30;
+                const b09=a21*a32-a22*a31, b10=a21*a33-a23*a31, b11=a22*a33-a23*a32;
+                let det = b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06;
+                if (!det) return null;
+                det = 1.0 / det;
+                out[0]=(a11*b11-a12*b10+a13*b09)*det; out[1]=(a12*b08-a10*b11-a13*b07)*det;
+                out[2]=(a10*b10-a11*b08+a13*b06)*det; out[3]=(a02*b10-a01*b11-a03*b09)*det;
+                out[4]=(a00*b11-a02*b08+a03*b07)*det; out[5]=(a01*b08-a00*b10-a03*b06)*det;
+                out[6]=(a31*b05-a32*b04+a33*b03)*det; out[7]=(a32*b02-a30*b05-a33*b01)*det;
+                out[8]=(a30*b04-a31*b02+a33*b00)*det;
+                return out;
+            }
+        };
+
+        // ============================================
+        // WEBGL UTILITIES
+        // ============================================
+        
+        function compileShader(type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+        
+        function createProgram(vsSource, fsSource) {
+            const vs = compileShader(gl.VERTEX_SHADER, vsSource);
+            const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+            const program = gl.createProgram();
+            gl.attachShader(program, vs);
+            gl.attachShader(program, fs);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+                return null;
+            }
+            return program;
+        }
+        
+        function createBuffer(data, type = gl.ARRAY_BUFFER) {
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(type, buffer);
+            gl.bufferData(type, data, gl.STATIC_DRAW);
+            return buffer;
+        }
+        
+        function loadTexture(src) {
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            // Placeholder pixel
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([200,200,200,255]));
+
+            let resolveReady;
+            const ready = new Promise(resolve => { resolveReady = resolve; });
+            textureReadyCache.set(src, ready);
+            
+            const img = new Image();
+            img.crossOrigin = '';
+            img.onload = () => {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                // Flip Y axis for correct orientation
+                gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                resolveReady(true);
+            };
+            img.onerror = () => resolveReady(false);
+            img.src = src;
+            return texture;
+        }
+
+        // ============================================
+        // GEOMETRY CREATION
+        // ============================================
+        
+        function createPlaneGeometry(width, height, radius) {
+            const hw = width / 2, hh = height / 2;
+            if (!radius) {
+                const positions = new Float32Array([-hw,-hh,0, hw,-hh,0, hw,hh,0, -hw,hh,0]);
+                const uvs = new Float32Array([0,0, 1,0, 1,1, 0,1]);
+                const normals = new Float32Array([0,0,1, 0,0,1, 0,0,1, 0,0,1]);
+                const indices = new Uint16Array([0,1,2, 0,2,3]);
+                return { positions, uvs, normals, indices };
+            }
+            const seg = 8, r = Math.min(radius, hw, hh);
+            const pts = [];
+            const corners = [
+                [hw-r, -hh+r, Math.PI*1.5], [-hw+r, -hh, null], [hw-r, -hh, null],
+            ];
+            pts.push([-hw+r, -hh]); pts.push([hw-r, -hh]);
+            for (let i = 0; i <= seg; i++) { const a = Math.PI*1.5+(Math.PI/2)*(i/seg); pts.push([hw-r+Math.cos(a)*r, -hh+r+Math.sin(a)*r]); }
+            pts.push([hw, hh-r]);
+            for (let i = 0; i <= seg; i++) { const a = (Math.PI/2)*(i/seg); pts.push([hw-r+Math.cos(a)*r, hh-r+Math.sin(a)*r]); }
+            pts.push([-hw+r, hh]);
+            for (let i = 0; i <= seg; i++) { const a = Math.PI/2+(Math.PI/2)*(i/seg); pts.push([-hw+r+Math.cos(a)*r, hh-r+Math.sin(a)*r]); }
+            pts.push([-hw, -hh+r]);
+            for (let i = 0; i <= seg; i++) { const a = Math.PI+(Math.PI/2)*(i/seg); pts.push([-hw+r+Math.cos(a)*r, -hh+r+Math.sin(a)*r]); }
+            const n = pts.length;
+            const positions = [0,0,0], uvs = [0.5,0.5], normals = [0,0,1];
+            for (const [x,y] of pts) { positions.push(x,y,0); uvs.push((x+hw)/width,(y+hh)/height); normals.push(0,0,1); }
+            const indices = [];
+            for (let i = 0; i < n; i++) indices.push(0, 1+i, 1+((i+1)%n));
+            return { positions: new Float32Array(positions), uvs: new Float32Array(uvs), normals: new Float32Array(normals), indices: new Uint16Array(indices) };
+        }
+        
+        function getRoundedRectPoints(hw, hh, r, segments) {
+            const points = [];
+            points.push([-hw+r, -hh]); points.push([hw-r, -hh]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = Math.PI*1.5 + (Math.PI/2)*(i/segments);
+                points.push([hw-r + Math.cos(angle)*r, -hh+r + Math.sin(angle)*r]);
+            }
+            points.push([hw, hh-r]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = 0 + (Math.PI/2)*(i/segments);
+                points.push([hw-r + Math.cos(angle)*r, hh-r + Math.sin(angle)*r]);
+            }
+            points.push([-hw+r, hh]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = Math.PI/2 + (Math.PI/2)*(i/segments);
+                points.push([-hw+r + Math.cos(angle)*r, hh-r + Math.sin(angle)*r]);
+            }
+            points.push([-hw, -hh+r]);
+            for (let i = 0; i <= segments; i++) {
+                const angle = Math.PI + (Math.PI/2)*(i/segments);
+                points.push([-hw+r + Math.cos(angle)*r, -hh+r + Math.sin(angle)*r]);
+            }
+            return points;
+        }
+
+        function buildMeshFromOutline(outline, depth) {
+            const hd = depth / 2;
+            const numOutline = outline.length;
+            const positions = [], normals = [], indices = [];
+
+            const frontStart = positions.length / 3;
+            positions.push(0, 0, hd); normals.push(0, 0, 1);
+            for (const [x, y] of outline) { positions.push(x, y, hd); normals.push(0, 0, 1); }
+            for (let i = 0; i < numOutline; i++) {
+                indices.push(frontStart, frontStart+1+i, frontStart+1+((i+1)%numOutline));
+            }
+
+            const backStart = positions.length / 3;
+            positions.push(0, 0, -hd); normals.push(0, 0, -1);
+            for (const [x, y] of outline) { positions.push(x, y, -hd); normals.push(0, 0, -1); }
+            for (let i = 0; i < numOutline; i++) {
+                indices.push(backStart, backStart+1+((i+1)%numOutline), backStart+1+i);
+            }
+
+            const sideStart = positions.length / 3;
+            for (let i = 0; i < numOutline; i++) {
+                const [x, y] = outline[i];
+                const [nx, ny] = outline[(i + 1) % numOutline];
+                const dx = nx - x, dy = ny - y;
+                const len = Math.sqrt(dx*dx + dy*dy) || 1;
+                const normalX = dy / len, normalY = -dx / len;
+
+                positions.push(x, y, hd, x, y, -hd, nx, ny, -hd, nx, ny, hd);
+                normals.push(normalX, normalY, 0, normalX, normalY, 0, normalX, normalY, 0, normalX, normalY, 0);
+
+                const base = sideStart + i * 4;
+                indices.push(base, base+1, base+2, base, base+2, base+3);
+            }
+
+            return {
+                positions: new Float32Array(positions),
+                normals: new Float32Array(normals),
+                indices: new Uint16Array(indices)
+            };
+        }
+
+        function createRoundedBoxGeometry(width, height, depth, radius) {
+            const segments = 8;
+            const hw = width/2, hh = height/2;
+            const r = Math.min(radius, hw, hh);
+            const outline = getRoundedRectPoints(hw, hh, r, segments);
+            return buildMeshFromOutline(outline, depth);
+        }
+
+        // ============================================
+        // SHADERS
+        // ============================================
+        
+        const texturedVS = `
+            attribute vec3 aPosition;
+            attribute vec2 aUV;
+            attribute vec3 aNormal;
+            uniform mat4 uProjection;
+            uniform mat4 uModelView;
+            uniform mat3 uNormalMatrix;
+            varying vec2 vUV;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec4 mvPos = uModelView * vec4(aPosition, 1.0);
+                vViewPos = -mvPos.xyz;
+                vNormal = normalize(uNormalMatrix * aNormal);
+                vUV = aUV;
+                gl_Position = uProjection * mvPos;
+            }
+        `;
+        
+        const texturedFS = `
+            precision highp float;
+            uniform sampler2D uTexture;
+            uniform vec3 uLightPos;
+            uniform float uAmbient;
+            varying vec2 vUV;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec4 tex = texture2D(uTexture, vUV);
+                vec3 N = normalize(vNormal);
+                vec3 L = normalize(uLightPos - (-vViewPos));
+                vec3 V = normalize(vViewPos);
+                vec3 H = normalize(L + V);
+                float diff = max(dot(N, L), 0.0);
+                float spec = pow(max(dot(N, H), 0.0), 32.0) * 0.1;
+                vec3 color = tex.rgb * (uAmbient + diff * 0.5) + vec3(spec);
+                gl_FragColor = vec4(color, tex.a);
+            }
+        `;
+        
+        const coloredVS = `
+            attribute vec3 aPosition;
+            attribute vec3 aNormal;
+            uniform mat4 uProjection;
+            uniform mat4 uModelView;
+            uniform mat3 uNormalMatrix;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec4 mvPos = uModelView * vec4(aPosition, 1.0);
+                vViewPos = -mvPos.xyz;
+                vNormal = normalize(uNormalMatrix * aNormal);
+                gl_Position = uProjection * mvPos;
+            }
+        `;
+        
+        const coloredFS = `
+            precision highp float;
+            uniform vec3 uColor;
+            uniform vec3 uLightPos;
+            uniform float uAmbient;
+            uniform float uSpecStrength;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            void main() {
+                vec3 N = normalize(vNormal);
+                vec3 L = normalize(uLightPos - (-vViewPos));
+                vec3 V = normalize(vViewPos);
+                vec3 H = normalize(L + V);
+                float diff = max(dot(N, L), 0.0);
+                float spec = pow(max(dot(N, H), 0.0), 64.0) * uSpecStrength;
+                vec3 color = uColor * (uAmbient + diff * 0.5) + vec3(spec);
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+        
+        const holoFS = `
+            precision highp float;
+            uniform sampler2D uTexture;
+            uniform sampler2D uMask;
+            uniform float uRotationAngle;
+            uniform float uHoloStrength;
+            uniform float uHoloSaturation;
+            uniform float uFoilLift;
+            uniform float uPhysicalFoil;
+            uniform float uFoilPower;
+            uniform float uMatteSpecScale;
+            uniform vec3 uLightPos;
+            uniform float uAmbient;
+            varying vec2 vUV;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            
+            vec3 hsv2rgb(vec3 c) {
+                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+            }
+            
+            float grain(vec2 p) {
+                vec2 q = floor(p);
+                return fract(sin(dot(q, vec2(127.1, 311.7))) * 43758.5453);
+            }
+            
+            void main() {
+                vec4 tex = texture2D(uTexture, vUV);
+                vec4 maskColor = texture2D(uMask, vUV);
+                float lum = maskColor.r * 0.299 + maskColor.g * 0.587 + maskColor.b * 0.114;
+                float maskVal = maskColor.a * (1.0 - lum);
+                maskVal = smoothstep(0.1, 0.35, maskVal);
+                
+                vec3 N = normalize(vNormal);
+                float a = uRotationAngle;
+                
+                float px = grain(vUV * 800.0);
+                float py = grain(vUV * 800.0 + vec2(73.1, 19.3));
+                vec3 perturbedN = normalize(N + vec3((px - 0.5) * 0.16, (py - 0.5) * 0.06, 0.0) * maskVal);
+                
+                vec3 L = normalize(uLightPos - (-vViewPos));
+                vec3 V = normalize(vViewPos);
+                vec3 H = normalize(L + V);
+                float diff = max(dot(perturbedN, L), 0.0);
+                float spec = pow(max(dot(perturbedN, H), 0.0), 14.0) * 0.12;
+                
+                float n1 = sin(vUV.x * 3.2 + vUV.y * 1.8 + a * 1.4);
+                float n2 = sin(vUV.x * 1.4 - vUV.y * 3.5 + a * 0.9 + 1.7);
+                float n3 = cos(vUV.x * 2.6 + vUV.y * 0.7 - a * 1.1 + 0.5);
+                float n4 = sin(vUV.x * 0.8 + vUV.y * 2.4 + a * 0.6 + 3.1);
+                float hue = fract((n1 + n2 + n3 + n4) * 0.12 + a * 0.15 + 0.15);
+                
+                float hlX = 0.5 + sin(a + 0.1) * 0.45;
+                float hlY = 0.5 + cos(a * 0.7 + 3.2) * 0.3;
+                float hlDist = length(vUV - vec2(hlX, hlY));
+                float hlFade = 1.0 - smoothstep(0.15, 0.55, hlDist);
+                float physicalFade = pow(max(dot(N, H), 0.0), uFoilPower);
+                float foilFade = mix(hlFade, physicalFade, uPhysicalFoil);
+                
+                float sat = (0.42 + 0.12 * (sin(vUV.x * 2.0 - vUV.y * 1.5 + a) * 0.5 + 0.5)) * foilFade * uHoloSaturation;
+                float val = 0.95 + 0.05 * n3;
+                vec3 rainbow = hsv2rgb(vec3(hue, sat, val));
+                
+                float fresnel = 1.0 - max(dot(perturbedN, V), 0.0);
+                fresnel = pow(fresnel, 2.0);
+                
+                // Блик по фону — как на задней стороне; на буквах свой gloss/flare
+                float bgSpec = pow(max(dot(N, H), 0.0), 32.0) * 0.1;
+                float matteSpec = spec * maskVal * mix(1.0, uMatteSpecScale, uPhysicalFoil);
+                vec3 baseColor = tex.rgb * (uAmbient + diff * 0.5) + vec3(matteSpec + bgSpec * (1.0 - maskVal));
+                
+                float wX = vUV.x + sin(vUV.y * 5.0 + a * 1.3) * 0.12;
+                float wY = vUV.y + cos(vUV.x * 4.0 + a * 0.9) * 0.1;
+                float flare = pow(max(1.0 - abs(fract(wX * 0.8 - wY * 0.3 + a * 0.5) - 0.5) * 1.0, 0.0), 1.5) * 0.1;
+                
+                float glossGrain = (grain(vUV * 600.0 + vec2(41.7, 83.2)) - 0.5) * 0.015;
+                float glossStrength = clamp((0.5 + fresnel * 0.55) * mix(0.0, 1.0, foilFade) * uHoloStrength, 0.0, 1.0);
+                float darkening = mix(0.95, 1.0, foilFade);
+                vec3 glossBase = baseColor * darkening;
+                vec3 liftedGlossBase = mix(glossBase, vec3(0.42), uFoilLift);
+                vec3 glossHolo = mix(liftedGlossBase + vec3(spec * (1.0 - maskVal)), rainbow, glossStrength) + vec3(glossGrain) * maskVal;
+                glossHolo += vec3(flare * uHoloStrength) * maskVal * foilFade;
+                
+                vec3 matteRainbow = hsv2rgb(vec3(hue, sat * 0.1, val * 0.95));
+                float matteHoloStrength = 0.05 * uHoloStrength * uHoloStrength * (1.0 - uPhysicalFoil);
+                vec3 matteHolo = mix(baseColor, matteRainbow, matteHoloStrength);
+                
+                vec3 holoColor = mix(matteHolo, glossHolo, maskVal);
+                
+                gl_FragColor = vec4(holoColor, tex.a);
+            }
+        `;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        function init() {
+            canvas = document.getElementById('card-canvas');
+            gl = canvas.getContext('webgl', { antialias: true, alpha: true });
+            if (!gl) { alert('WebGL not supported'); return; }
+            
+            const dpr = Math.min(window.devicePixelRatio, 2);
+            canvas.width = canvas.clientWidth * dpr;
+            canvas.height = canvas.clientHeight * dpr;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.CULL_FACE);
+            gl.cullFace(gl.BACK);
+            gl.clearColor(0, 0, 0, 0);
+            
+            // Create programs
+            frontProgram = createProgram(texturedVS, texturedFS);
+            backProgram = createProgram(texturedVS, texturedFS);
+            edgeProgram = createProgram(coloredVS, coloredFS);
+            holoProgram = createProgram(texturedVS, holoFS);
+            
+            // Create matrices
+            projectionMatrix = mat4.create();
+            viewMatrix = mat4.create();
+            modelMatrix = mat4.create();
+            
+            const aspect = canvas.clientWidth / canvas.clientHeight;
+            mat4.perspective(projectionMatrix, 45 * Math.PI / 180, aspect, 0.1, 100);
+            mat4.identity(viewMatrix);
+            mat4.translate(viewMatrix, viewMatrix, [0, 0, -4.2]);
+            
+            updateCardGeometry(currentSkin);
+            updateTextures();
+            
+            setupEventListeners();
+            animate();
+        }
+
+        function updateCardGeometry(skinIndex) {
+            const cornerRadius = skins[skinIndex].cornerRadius ?? 0.10;
+            const cachedGeometry = geometryCache.get(cornerRadius);
+            if (cachedGeometry) {
+                frontVAO = cachedGeometry.front;
+                backVAO = cachedGeometry.back;
+                edgeVAO = cachedGeometry.edge;
+                edgeIndexCount = cachedGeometry.edge.count;
+                return;
+            }
+
+            const cardWidth = 3.2, cardHeight = 2.02, cardDepth = 0.04;
+            
+            // Front plane (rounded)
+            const frontGeo = createPlaneGeometry(cardWidth, cardHeight, cornerRadius);
+            const frontPosBuffer = createBuffer(frontGeo.positions);
+            const frontUVBuffer = createBuffer(frontGeo.uvs);
+            const frontNormBuffer = createBuffer(frontGeo.normals);
+            const frontIdxBuffer = createBuffer(frontGeo.indices, gl.ELEMENT_ARRAY_BUFFER);
+            frontVAO = { pos: frontPosBuffer, uv: frontUVBuffer, norm: frontNormBuffer, idx: frontIdxBuffer, count: frontGeo.indices.length, z: cardDepth/2 + 0.005 };
+            
+            // Back plane (rounded)
+            const backGeo = createPlaneGeometry(cardWidth, cardHeight, cornerRadius);
+            const backPosBuffer = createBuffer(backGeo.positions);
+            const backUVBuffer = createBuffer(backGeo.uvs);
+            const backNormBuffer = createBuffer(backGeo.normals);
+            const backIdxBuffer = createBuffer(backGeo.indices, gl.ELEMENT_ARRAY_BUFFER);
+            backVAO = { pos: backPosBuffer, uv: backUVBuffer, norm: backNormBuffer, idx: backIdxBuffer, count: backGeo.indices.length, z: -cardDepth/2 - 0.005 };
+            
+            // Edge (подложка между передней и задней стороной)
+            const edgeGeo = createRoundedBoxGeometry(cardWidth, cardHeight, cardDepth, cornerRadius);
+            const edgePosBuffer = createBuffer(edgeGeo.positions);
+            const edgeNormBuffer = createBuffer(edgeGeo.normals);
+            const edgeIdxBuffer = createBuffer(edgeGeo.indices, gl.ELEMENT_ARRAY_BUFFER);
+            edgeIndexCount = edgeGeo.indices.length;
+            edgeVAO = { pos: edgePosBuffer, norm: edgeNormBuffer, idx: edgeIdxBuffer, count: edgeIndexCount };
+
+            geometryCache.set(cornerRadius, {
+                front: frontVAO,
+                back: backVAO,
+                edge: edgeVAO
+            });
+        }
+
+        function updateTextures() {
+            const skin = skins[currentSkin];
+            let cachedTextures = textureCache.get(currentSkin);
+            if (!cachedTextures) {
+                cachedTextures = {
+                    front: getCachedTexture(skin.front),
+                    back: getCachedTexture(skin.back),
+                    mask: getCachedTexture(skin.mask)
+                };
+                textureCache.set(currentSkin, cachedTextures);
+            }
+
+            frontTexture = cachedTextures.front;
+            backTexture = cachedTextures.back;
+            maskTexture = cachedTextures.mask;
+        }
+
+        function getCachedTexture(source) {
+            if (!source) return null;
+            if (!textureSourceCache.has(source)) {
+                textureSourceCache.set(source, loadTexture(source));
+            }
+            return textureSourceCache.get(source);
+        }
+
+        function waitForSkinTextures(skinIndex) {
+            const skin = skins[skinIndex];
+            const sources = [skin.front, skin.back, skin.mask].filter(Boolean);
+            sources.forEach(getCachedTexture);
+            return Promise.all(
+                sources.map(source => textureReadyCache.get(source) || Promise.resolve(true))
+            );
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        
+        function drawTexturedMesh(program, vao, texture, modelMat, flipY = false) {
+            gl.useProgram(program);
+            
+            const mvMatrix = mat4.create();
+            mat4.multiply(mvMatrix, viewMatrix, modelMat);
+            
+            const normalMat = new Float32Array(9);
+            mat4.normalFromMat4(normalMat, mvMatrix);
+            
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uProjection'), false, projectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uModelView'), false, mvMatrix);
+            gl.uniformMatrix3fv(gl.getUniformLocation(program, 'uNormalMatrix'), false, normalMat);
+            gl.uniform3fv(gl.getUniformLocation(program, 'uLightPos'), [3, 3, 5]);
+            gl.uniform1f(gl.getUniformLocation(program, 'uAmbient'), 0.5);
+            
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(gl.getUniformLocation(program, 'uTexture'), 0);
+            
+            const posLoc = gl.getAttribLocation(program, 'aPosition');
+            const uvLoc = gl.getAttribLocation(program, 'aUV');
+            const normLoc = gl.getAttribLocation(program, 'aNormal');
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.pos);
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.uv);
+            gl.enableVertexAttribArray(uvLoc);
+            gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.norm);
+            gl.enableVertexAttribArray(normLoc);
+            gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vao.idx);
+            gl.drawElements(gl.TRIANGLES, vao.count, gl.UNSIGNED_SHORT, 0);
+        }
+        
+        function drawColoredMesh(program, vao, color, modelMat, specStrength = 0.4) {
+            gl.useProgram(program);
+            
+            const mvMatrix = mat4.create();
+            mat4.multiply(mvMatrix, viewMatrix, modelMat);
+            
+            const normalMat = new Float32Array(9);
+            mat4.normalFromMat4(normalMat, mvMatrix);
+            
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uProjection'), false, projectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(program, 'uModelView'), false, mvMatrix);
+            gl.uniformMatrix3fv(gl.getUniformLocation(program, 'uNormalMatrix'), false, normalMat);
+            gl.uniform3fv(gl.getUniformLocation(program, 'uColor'), color);
+            gl.uniform3fv(gl.getUniformLocation(program, 'uLightPos'), [3, 3, 5]);
+            gl.uniform1f(gl.getUniformLocation(program, 'uSpecStrength'), specStrength);
+            gl.uniform1f(gl.getUniformLocation(program, 'uAmbient'), 0.4);
+            
+            const posLoc = gl.getAttribLocation(program, 'aPosition');
+            const normLoc = gl.getAttribLocation(program, 'aNormal');
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.pos);
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.norm);
+            gl.enableVertexAttribArray(normLoc);
+            gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vao.idx);
+            gl.drawElements(gl.TRIANGLES, vao.count, gl.UNSIGNED_SHORT, 0);
+        }
+        
+        function drawHoloMesh(vao, baseTexture, maskTex, rotAngle, modelMat, material = {}) {
+            gl.useProgram(holoProgram);
+            
+            const mvMatrix = mat4.create();
+            mat4.multiply(mvMatrix, viewMatrix, modelMat);
+            
+            const normalMat = new Float32Array(9);
+            mat4.normalFromMat4(normalMat, mvMatrix);
+            
+            gl.uniformMatrix4fv(gl.getUniformLocation(holoProgram, 'uProjection'), false, projectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(holoProgram, 'uModelView'), false, mvMatrix);
+            gl.uniformMatrix3fv(gl.getUniformLocation(holoProgram, 'uNormalMatrix'), false, normalMat);
+            gl.uniform3fv(gl.getUniformLocation(holoProgram, 'uLightPos'), [3, 3, 5]);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uAmbient'), 0.5);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uRotationAngle'), rotAngle);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uHoloStrength'), material.strength ?? 1.0);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uHoloSaturation'), material.saturation ?? 1.0);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uFoilLift'), material.foilLift ?? 0.0);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uPhysicalFoil'), material.physicalFoil ?? 0.0);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uFoilPower'), material.foilPower ?? 52.0);
+            gl.uniform1f(gl.getUniformLocation(holoProgram, 'uMatteSpecScale'), material.matteSpecScale ?? 1.0);
+            
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, baseTexture);
+            gl.uniform1i(gl.getUniformLocation(holoProgram, 'uTexture'), 0);
+            
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, maskTex);
+            gl.uniform1i(gl.getUniformLocation(holoProgram, 'uMask'), 1);
+            
+            const posLoc = gl.getAttribLocation(holoProgram, 'aPosition');
+            const uvLoc = gl.getAttribLocation(holoProgram, 'aUV');
+            const normLoc = gl.getAttribLocation(holoProgram, 'aNormal');
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.pos);
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.uv);
+            gl.enableVertexAttribArray(uvLoc);
+            gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, vao.norm);
+            gl.enableVertexAttribArray(normLoc);
+            gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+            
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vao.idx);
+            gl.drawElements(gl.TRIANGLES, vao.count, gl.UNSIGNED_SHORT, 0);
+        }
+        
+        function render() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            // Smooth rotation
+            rotationY += (targetRotationY - rotationY) * 0.15;
+            const rotY = rotationY * Math.PI / 180 + shakeOffset.y + hintRotationY;
+            const rotX = shakeOffset.x;
+            
+            const skin = skins[currentSkin];
+
+            // Edge
+            mat4.identity(modelMatrix);
+            mat4.rotateY(modelMatrix, modelMatrix, rotY);
+            mat4.rotateX(modelMatrix, modelMatrix, rotX);
+            drawColoredMesh(edgeProgram, edgeVAO, skin.edge, modelMatrix);
+            
+            // Front face
+            const frontMat = mat4.create();
+            mat4.identity(frontMat);
+            mat4.rotateY(frontMat, frontMat, rotY);
+            mat4.rotateX(frontMat, frontMat, rotX);
+            mat4.translate(frontMat, frontMat, [0, 0, frontVAO.z]);
+            if (skin.holographic && maskTexture) {
+                drawHoloMesh(frontVAO, frontTexture, maskTexture, rotY, frontMat, skin.holoMaterial);
+            } else {
+                drawTexturedMesh(frontProgram, frontVAO, frontTexture, frontMat);
+            }
+            
+            // Back face
+            const backMat = mat4.create();
+            mat4.identity(backMat);
+            mat4.rotateY(backMat, backMat, rotY);
+            mat4.rotateX(backMat, backMat, rotX);
+            mat4.translate(backMat, backMat, [0, 0, backVAO.z]);
+            mat4.rotateY(backMat, backMat, Math.PI);
+            drawTexturedMesh(backProgram, backVAO, backTexture, backMat);
+        }
+
+        // ============================================
+        // EVENT HANDLING
+        // ============================================
+
+        function setupVerticalWheelPreview() {
+            if (!isVerticalWheelPreview) return null;
+
+            const shell = document.getElementById('vertical-wheel-shell');
+            const wheel = document.getElementById('vertical-wheel');
+            const productStage = document.getElementById('product-stage');
+            const bottomIsland = document.querySelector('.bottom-island');
+            const horizontalShell = document.getElementById('design-carousel-shell');
+            const viewToggle = document.getElementById('carousel-view-toggle');
+            const wheelStatus = document.getElementById('vertical-wheel-status');
+
+            shell.hidden = false;
+            horizontalShell.setAttribute('aria-hidden', 'true');
+            viewToggle.setAttribute('aria-hidden', 'true');
+            canvas.tabIndex = -1;
+            canvas.setAttribute('aria-hidden', 'true');
+            const stickerStage = document.getElementById('sticker-stage');
+            stickerStage.tabIndex = -1;
+            stickerStage.setAttribute('aria-hidden', 'true');
+
+            const wheelCycleCount = 7;
+            const middleCycle = Math.floor(wheelCycleCount / 2);
+            const itemCount = carouselItems.length;
+
+            for (let cycle = 0; cycle < wheelCycleCount; cycle += 1) {
+                carouselItems.forEach((item, logicalIndex) => {
+                    const isAccessibleCycle = cycle === middleCycle;
+                    const option = document.createElement(isAccessibleCycle ? 'button' : 'div');
+                    const physicalIndex = cycle * itemCount + logicalIndex;
+                    option.className = 'wheel-option';
+                    option.dataset.designIndex = String(logicalIndex);
+                    option.dataset.physicalIndex = String(physicalIndex);
+
+                    if (isAccessibleCycle) {
+                        option.type = 'button';
+                        option.setAttribute('role', 'option');
+                        option.setAttribute('aria-label', `${item.label}, ${logicalIndex + 1} из ${itemCount}`);
+                        option.setAttribute('aria-posinset', String(logicalIndex + 1));
+                        option.setAttribute('aria-setsize', String(itemCount));
+                        option.setAttribute('aria-selected', String(logicalIndex === currentCarouselIndex));
+                        option.tabIndex = logicalIndex === currentCarouselIndex ? 0 : -1;
+                    } else {
+                        option.setAttribute('aria-hidden', 'true');
+                    }
+
+                    const face = document.createElement('span');
+                    const image = document.createElement('img');
+                    image.alt = '';
+                    image.draggable = false;
+                    image.decoding = 'async';
+
+                    if (item.mode === 'card') {
+                        face.className = 'wheel-face wheel-face--card';
+                        image.src = skins[item.localIndex].front;
+                    } else {
+                        const sticker = stickers[item.localIndex];
+                        face.className = `wheel-face wheel-face--sticker-flat wheel-face--${sticker.carrier}`;
+                        image.src = sticker.src;
+                    }
+
+                    face.appendChild(image);
+                    option.appendChild(face);
+                    wheel.appendChild(option);
+                });
+            }
+
+            const options = [...wheel.querySelectorAll('.wheel-option')];
+            let rowSize = 140;
+            let firstTargetTop = 0;
+            let selectedIndex = currentCarouselIndex;
+            let previewIndex = currentCarouselIndex;
+            let selectedPhysicalIndex = middleCycle * itemCount + currentCarouselIndex;
+            let programmaticTargetPhysicalIndex = selectedPhysicalIndex;
+            let programmaticScroll = false;
+            let normalizingScroll = false;
+            let pendingCommitIndex = null;
+            let pendingCommitFocus = false;
+            let pendingCommitDirection = null;
+            let afterCenterCallback = null;
+            let interactionActive = false;
+            let scrollTimer = null;
+            let programmaticTimer = null;
+            let wheelBurstTimer = null;
+            let visualFrame = null;
+            let handoffFrame = null;
+            let handoffRevision = -1;
+            let ignoreInternalScroll = false;
+            let motionRevision = 0;
+            let pointerId = null;
+            let pointerStartY = 0;
+            let pointerStartScrollTop = 0;
+            let pointerMoved = false;
+            let pointerTapPhysicalIndex = null;
+            let touchStartScrollTop = 0;
+            let touchTapPhysicalIndex = null;
+            let suppressClickUntil = 0;
+            let lastWheelHapticAt = 0;
+            let resizeFrame = null;
+            let visualStart = 0;
+            let visualEnd = -1;
+
+            function logicalIndex(physicalIndex) {
+                return ((physicalIndex % itemCount) + itemCount) % itemCount;
+            }
+
+            function middlePhysicalIndex(index) {
+                return middleCycle * itemCount + logicalIndex(index);
+            }
+
+            function targetScrollTop(physicalIndex) {
+                return firstTargetTop + physicalIndex * rowSize;
+            }
+
+            function closestPhysicalIndex() {
+                const physicalIndex = Math.round((wheel.scrollTop - firstTargetTop) / rowSize);
+                return Math.max(0, Math.min(options.length - 1, physicalIndex));
+            }
+
+            function nearestPhysicalIndex(index, anchor = closestPhysicalIndex()) {
+                const logical = logicalIndex(index);
+                const nearestCycle = Math.round((anchor - logical) / itemCount);
+                const safeCycle = Math.max(1, Math.min(wheelCycleCount - 2, nearestCycle));
+                return safeCycle * itemCount + logical;
+            }
+
+            function finishNormalizationOnNextPaint() {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        wheel.classList.remove('is-normalizing');
+                        normalizingScroll = false;
+                        requestVisualUpdate();
+                    });
+                });
+            }
+
+            function normalizePhysicalIndex(physicalIndex) {
+                const normalizedIndex = middlePhysicalIndex(physicalIndex);
+                const phase = wheel.scrollTop - targetScrollTop(physicalIndex);
+                const normalizedTop = targetScrollTop(normalizedIndex) + phase;
+                selectedPhysicalIndex = normalizedIndex;
+                programmaticTargetPhysicalIndex = normalizedIndex;
+
+                if (Math.abs(wheel.scrollTop - normalizedTop) > 0.5) {
+                    normalizingScroll = true;
+                    wheel.classList.add('is-normalizing');
+                    wheel.scrollTop = normalizedTop;
+                    requestVisualUpdate();
+                    finishNormalizationOnNextPaint();
+                }
+                return normalizedIndex;
+            }
+
+            function rebaseScrollWindowIfNeeded() {
+                if (normalizingScroll || !wheel.clientHeight) return false;
+                const physicalIndex = closestPhysicalIndex();
+                const cycle = Math.floor(physicalIndex / itemCount);
+                if (cycle > 1 && cycle < wheelCycleCount - 2) return false;
+
+                const normalizedIndex = middlePhysicalIndex(physicalIndex);
+                const physicalDelta = normalizedIndex - physicalIndex;
+                const scrollDelta = targetScrollTop(normalizedIndex) - targetScrollTop(physicalIndex);
+                normalizingScroll = true;
+                wheel.classList.add('is-normalizing');
+                wheel.scrollTop += scrollDelta;
+                pointerStartScrollTop += scrollDelta;
+                touchStartScrollTop += scrollDelta;
+                if (programmaticScroll) {
+                    programmaticTargetPhysicalIndex += physicalDelta;
+                }
+                requestVisualUpdate();
+                finishNormalizationOnNextPaint();
+                return true;
+            }
+
+            function setScrolling(scrolling) {
+                verticalWheelScrolling = scrolling;
+                productStage.classList.toggle('is-wheel-scrolling', scrolling);
+            }
+
+            function setSelected(index) {
+                selectedIndex = logicalIndex(index);
+                selectedPhysicalIndex = middlePhysicalIndex(selectedIndex);
+                options.forEach((option, optionIndex) => {
+                    const selected = optionIndex === selectedPhysicalIndex;
+                    option.classList.toggle('selected', selected);
+                    if (option.getAttribute('role') === 'option') {
+                        option.setAttribute('aria-selected', String(selected));
+                        option.tabIndex = selected ? 0 : -1;
+                    }
+                });
+            }
+
+            function updateVisuals() {
+                visualFrame = null;
+                if (!wheel.clientHeight) return;
+
+                const centerPosition = (wheel.scrollTop - firstTargetTop) / rowSize;
+                const nextVisualStart = Math.max(0, Math.floor(centerPosition) - 3);
+                const nextVisualEnd = Math.min(
+                    options.length - 1,
+                    Math.ceil(centerPosition) + 3
+                );
+
+                for (let index = visualStart; index <= visualEnd; index += 1) {
+                    if (index >= nextVisualStart && index <= nextVisualEnd) continue;
+                    const option = options[index];
+                    option.style.opacity = '0';
+                    option.style.zIndex = '0';
+                    option.style.willChange = 'auto';
+                }
+
+                for (let index = nextVisualStart; index <= nextVisualEnd; index += 1) {
+                    const option = options[index];
+                    const distance = index - centerPosition;
+                    const limitedDistance = Math.max(-2.15, Math.min(2.15, distance));
+                    const absoluteDistance = Math.abs(limitedDistance);
+                    const actualDistance = Math.abs(distance);
+                    const rotation = prefersReducedMotion
+                        ? 0
+                        : Math.max(-56, Math.min(56, -26 * limitedDistance));
+                    const depth = prefersReducedMotion ? 0 : -48 * Math.min(absoluteDistance, 2);
+                    const scale = prefersReducedMotion
+                        ? 1
+                        : 1 - 0.17 * Math.min(absoluteDistance, 2);
+                    const opacity = prefersReducedMotion
+                        ? Math.max(0.4, 1 - 0.6 * absoluteDistance)
+                        : Math.max(0.08, 1 - 0.48 * absoluteDistance);
+
+                    option.style.transform = `perspective(var(--wheel-perspective)) translateZ(${depth.toFixed(2)}px) rotateX(${rotation.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+                    option.style.opacity = opacity.toFixed(3);
+                    option.style.zIndex = String(20 - Math.round(absoluteDistance * 6));
+                    option.style.willChange = actualDistance <= 2.2
+                        ? 'transform, opacity'
+                        : 'auto';
+                }
+
+                visualStart = nextVisualStart;
+                visualEnd = nextVisualEnd;
+
+                const nextPreviewIndex = logicalIndex(Math.round(centerPosition));
+                if (interactionActive && nextPreviewIndex !== previewIndex) {
+                    previewIndex = nextPreviewIndex;
+                    const now = performance.now();
+                    if (now - lastWheelHapticAt >= 72) {
+                        haptic(5);
+                        lastWheelHapticAt = now;
+                    }
+                }
+            }
+
+            function requestVisualUpdate() {
+                if (!visualFrame) visualFrame = requestAnimationFrame(updateVisuals);
+            }
+
+            function cancelProgrammaticHandoff() {
+                if (handoffFrame) cancelAnimationFrame(handoffFrame);
+                handoffFrame = null;
+                handoffRevision = -1;
+                ignoreInternalScroll = false;
+            }
+
+            function completeProgrammaticHandoff(revision) {
+                if (handoffRevision === revision) return;
+                handoffRevision = revision;
+                ignoreInternalScroll = true;
+
+                const item = carouselItems[currentCarouselIndex];
+                const ready = item.mode === 'card'
+                    ? waitForSkinTextures(item.localIndex)
+                    : Promise.resolve();
+
+                ready.then(() => {
+                    if (revision !== motionRevision || handoffRevision !== revision) return;
+                    if (item.mode === 'card') render();
+
+                    handoffFrame = requestAnimationFrame(() => {
+                        if (revision !== motionRevision || handoffRevision !== revision) return;
+                        if (item.mode === 'card') render();
+
+                        handoffFrame = requestAnimationFrame(() => {
+                            if (revision !== motionRevision || handoffRevision !== revision) return;
+                            programmaticScroll = false;
+                            setScrolling(false);
+                            requestVisualUpdate();
+
+                            if (afterCenterCallback) {
+                                const callback = afterCenterCallback;
+                                afterCenterCallback = null;
+                                requestAnimationFrame(callback);
+                            }
+
+                            handoffFrame = requestAnimationFrame(() => {
+                                if (revision !== motionRevision || handoffRevision !== revision) return;
+                                ignoreInternalScroll = false;
+                                handoffRevision = -1;
+                                handoffFrame = null;
+                            });
+                        });
+                    });
+                });
+            }
+
+            function finishProgrammaticScroll(revision = motionRevision) {
+                if (revision !== motionRevision || !programmaticScroll) return;
+                if (handoffRevision === revision) return;
+                const targetTop = targetScrollTop(programmaticTargetPhysicalIndex);
+                if (Math.abs(wheel.scrollTop - targetTop) > 2.5) {
+                    clearTimeout(programmaticTimer);
+                    programmaticTimer = setTimeout(
+                        () => finishProgrammaticScroll(revision),
+                        80
+                    );
+                    return;
+                }
+                clearTimeout(programmaticTimer);
+                wheel.scrollTop = targetTop;
+                normalizePhysicalIndex(programmaticTargetPhysicalIndex);
+                if (pendingCommitIndex !== null) {
+                    const nextIndex = pendingCommitIndex;
+                    const shouldFocus = pendingCommitFocus;
+                    const direction = pendingCommitDirection;
+                    pendingCommitIndex = null;
+                    pendingCommitFocus = false;
+                    pendingCommitDirection = null;
+                    selectCarouselItem(nextIndex, { scroll: false, direction });
+                    setSelected(nextIndex);
+                    previewIndex = nextIndex;
+                    if (shouldFocus) {
+                        options[middlePhysicalIndex(nextIndex)]?.focus({ preventScroll: true });
+                    }
+                } else {
+                    setSelected(currentCarouselIndex);
+                    previewIndex = currentCarouselIndex;
+                }
+                requestVisualUpdate();
+                completeProgrammaticHandoff(revision);
+            }
+
+            function commitClosest(commitOptions = {}) {
+                if (interactionActive) return;
+                clearTimeout(scrollTimer);
+
+                if (programmaticScroll) {
+                    finishProgrammaticScroll(motionRevision);
+                    return;
+                }
+
+                snapToPhysical(closestPhysicalIndex(), Boolean(commitOptions.focus));
+            }
+
+            function scheduleCommit(delay = 120) {
+                clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(() => commitClosest(), delay);
+            }
+
+            function center(index, behavior = prefersReducedMotion ? 'auto' : 'smooth') {
+                if (!wheel.clientHeight) return;
+                cancelProgrammaticHandoff();
+                const nextIndex = logicalIndex(index);
+                const targetPhysicalIndex = nearestPhysicalIndex(nextIndex);
+                const top = targetScrollTop(targetPhysicalIndex);
+                setSelected(nextIndex);
+                previewIndex = nextIndex;
+                pendingCommitIndex = null;
+                pendingCommitFocus = false;
+                pendingCommitDirection = null;
+                programmaticTargetPhysicalIndex = targetPhysicalIndex;
+                programmaticScroll = true;
+                interactionActive = false;
+                clearTimeout(scrollTimer);
+                clearTimeout(programmaticTimer);
+                setScrolling(true);
+                const revision = ++motionRevision;
+
+                if (Math.abs(wheel.scrollTop - top) < 1) {
+                    wheel.scrollTop = top;
+                    finishProgrammaticScroll(revision);
+                    return;
+                }
+
+                wheel.scrollTo({ top, behavior });
+                programmaticTimer = setTimeout(
+                    () => finishProgrammaticScroll(revision),
+                    behavior === 'auto' ? 40 : 420
+                );
+            }
+
+            function snapToPhysical(physicalIndex, focus = false) {
+                cancelProgrammaticHandoff();
+                const nextPhysicalIndex = Math.max(0, Math.min(options.length - 1, physicalIndex));
+                const nextIndex = logicalIndex(nextPhysicalIndex);
+                const top = targetScrollTop(nextPhysicalIndex);
+                const direction = Math.sign(nextPhysicalIndex - closestPhysicalIndex());
+                const revision = ++motionRevision;
+                programmaticScroll = false;
+                interactionActive = false;
+                clearTimeout(scrollTimer);
+                clearTimeout(programmaticTimer);
+                setScrolling(true);
+
+                pendingCommitIndex = nextIndex;
+                pendingCommitFocus = focus;
+                pendingCommitDirection = direction;
+                programmaticTargetPhysicalIndex = nextPhysicalIndex;
+                programmaticScroll = true;
+
+                if (Math.abs(wheel.scrollTop - top) <= 0.5) {
+                    wheel.scrollTop = top;
+                    finishProgrammaticScroll(revision);
+                    return;
+                }
+
+                wheel.scrollTo({
+                    top,
+                    behavior: prefersReducedMotion ? 'auto' : 'smooth'
+                });
+                programmaticTimer = setTimeout(
+                    () => finishProgrammaticScroll(revision),
+                    prefersReducedMotion ? 30 : 320
+                );
+            }
+
+            function activateCurrentProduct() {
+                if (currentMode === 'card') {
+                    toggleCardSide();
+                }
+            }
+
+            function beginInteraction(interactionOptions = {}) {
+                const showScrollingState = interactionOptions.showScrollingState !== false;
+                cancelProgrammaticHandoff();
+                motionRevision += 1;
+                programmaticScroll = false;
+                pendingCommitIndex = null;
+                pendingCommitFocus = false;
+                pendingCommitDirection = null;
+                afterCenterCallback = null;
+                interactionActive = true;
+                clearTimeout(wheelBurstTimer);
+                clearTimeout(programmaticTimer);
+                clearTimeout(scrollTimer);
+                cancelCardHint();
+                cancelStickerAutoplay();
+                if (showScrollingState) setScrolling(true);
+            }
+
+            function measureAndCenter() {
+                cancelAnimationFrame(resizeFrame);
+                resizeFrame = requestAnimationFrame(() => {
+                    cancelProgrammaticHandoff();
+                    const revision = ++motionRevision;
+                    const stageStyles = getComputedStyle(productStage);
+                    rowSize = parseFloat(stageStyles.getPropertyValue('--wheel-row')) || 140;
+                    const padding = Math.max(0, (wheel.clientHeight - rowSize) / 2);
+                    wheel.style.setProperty('--wheel-pad', `${padding}px`);
+                    const firstOption = options[0];
+                    firstTargetTop = firstOption.offsetTop
+                        + firstOption.offsetHeight / 2
+                        - wheel.clientHeight / 2;
+                    setScrolling(true);
+                    programmaticScroll = true;
+                    pendingCommitIndex = null;
+                    programmaticTargetPhysicalIndex = middlePhysicalIndex(currentCarouselIndex);
+                    wheel.scrollTop = targetScrollTop(programmaticTargetPhysicalIndex);
+                    setSelected(currentCarouselIndex);
+                    previewIndex = currentCarouselIndex;
+                    updateVisuals();
+                    clearTimeout(programmaticTimer);
+                    programmaticTimer = setTimeout(
+                        () => finishProgrammaticScroll(revision),
+                        40
+                    );
+                });
+            }
+
+            function activatePhysicalOption(physicalIndex) {
+                if (!Number.isInteger(physicalIndex) || !options[physicalIndex]) return;
+                const nextIndex = logicalIndex(physicalIndex);
+                const isCentered = physicalIndex === closestPhysicalIndex();
+                if (isCentered && nextIndex === currentCarouselIndex) activateCurrentProduct();
+                else snapToPhysical(physicalIndex);
+            }
+
+            options.forEach((option, physicalIndex) => {
+                option.addEventListener('click', () => {
+                    if (performance.now() < suppressClickUntil) return;
+                    if (productStage.classList.contains('is-wheel-scrolling')) return;
+                    activatePhysicalOption(physicalIndex);
+                });
+            });
+
+            wheel.addEventListener('scroll', () => {
+                if (ignoreInternalScroll) {
+                    requestVisualUpdate();
+                    return;
+                }
+                const directDragStart = pointerId !== null
+                    ? pointerStartScrollTop
+                    : touchStartScrollTop;
+                if (interactionActive && Math.abs(wheel.scrollTop - directDragStart) > 4) {
+                    setScrolling(true);
+                }
+                if (rebaseScrollWindowIfNeeded()) return;
+                requestVisualUpdate();
+                if (programmaticScroll || normalizingScroll || interactionActive) return;
+                setScrolling(true);
+                scheduleCommit(120);
+            }, { passive: true });
+
+            wheel.addEventListener('touchstart', event => {
+                touchStartScrollTop = wheel.scrollTop;
+                const option = event.target.closest?.('.wheel-option');
+                touchTapPhysicalIndex = option
+                    ? Number(option.dataset.physicalIndex)
+                    : null;
+                beginInteraction({ showScrollingState: false });
+            }, { passive: true });
+            wheel.addEventListener('touchend', () => {
+                interactionActive = false;
+                const moved = Math.abs(wheel.scrollTop - touchStartScrollTop) > 4;
+                if (moved) {
+                    suppressClickUntil = performance.now() + 350;
+                    scheduleCommit(100);
+                } else {
+                    suppressClickUntil = performance.now() + 350;
+                    clearTimeout(scrollTimer);
+                    setScrolling(false);
+                    activatePhysicalOption(touchTapPhysicalIndex);
+                }
+                touchTapPhysicalIndex = null;
+            }, { passive: true });
+            wheel.addEventListener('touchcancel', () => {
+                interactionActive = false;
+                touchTapPhysicalIndex = null;
+                scheduleCommit(100);
+            }, { passive: true });
+            wheel.addEventListener('wheel', () => {
+                beginInteraction();
+                wheelBurstTimer = setTimeout(() => {
+                    interactionActive = false;
+                    scheduleCommit(60);
+                }, 140);
+            }, { passive: true });
+
+            if ('onscrollend' in wheel) {
+                wheel.addEventListener('scrollend', () => {
+                    if (interactionActive || normalizingScroll || ignoreInternalScroll) return;
+                    if (programmaticScroll) finishProgrammaticScroll(motionRevision);
+                    else commitClosest();
+                });
+            }
+
+            wheel.addEventListener('pointerdown', event => {
+                if (event.pointerType !== 'mouse' || event.button !== 0) return;
+                beginInteraction({ showScrollingState: false });
+                pointerId = event.pointerId;
+                pointerStartY = event.clientY;
+                pointerStartScrollTop = wheel.scrollTop;
+                pointerMoved = false;
+                const option = event.target.closest?.('.wheel-option');
+                pointerTapPhysicalIndex = option
+                    ? Number(option.dataset.physicalIndex)
+                    : null;
+                wheel.classList.add('is-dragging');
+                wheel.setPointerCapture?.(pointerId);
+            });
+
+            wheel.addEventListener('pointermove', event => {
+                if (event.pointerId !== pointerId) return;
+                const delta = event.clientY - pointerStartY;
+                if (!pointerMoved && Math.abs(delta) <= 4) return;
+                if (!pointerMoved) {
+                    pointerMoved = true;
+                    setScrolling(true);
+                }
+                wheel.scrollTop = pointerStartScrollTop - delta;
+            });
+
+            const finishPointerDrag = event => {
+                if (event.pointerId !== pointerId) return;
+                wheel.releasePointerCapture?.(pointerId);
+                pointerId = null;
+                interactionActive = false;
+                wheel.classList.remove('is-dragging');
+                if (pointerMoved) {
+                    suppressClickUntil = performance.now() + 80;
+                    scheduleCommit(40);
+                }
+                else {
+                    suppressClickUntil = performance.now() + 80;
+                    setScrolling(false);
+                    activatePhysicalOption(pointerTapPhysicalIndex);
+                }
+                pointerTapPhysicalIndex = null;
+            };
+
+            wheel.addEventListener('pointerup', finishPointerDrag);
+            wheel.addEventListener('pointercancel', finishPointerDrag);
+
+            wheel.addEventListener('keydown', event => {
+                const currentPhysicalIndex = programmaticScroll
+                    ? programmaticTargetPhysicalIndex
+                    : closestPhysicalIndex();
+                let nextPhysicalIndex = currentPhysicalIndex;
+                if (event.key === 'ArrowDown') nextPhysicalIndex += 1;
+                else if (event.key === 'ArrowUp') nextPhysicalIndex -= 1;
+                else if (event.key === 'Home') nextPhysicalIndex = nearestPhysicalIndex(0, currentPhysicalIndex);
+                else if (event.key === 'End') nextPhysicalIndex = nearestPhysicalIndex(itemCount - 1, currentPhysicalIndex);
+                else if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    activateCurrentProduct();
+                    return;
+                } else return;
+
+                event.preventDefault();
+                snapToPhysical(nextPhysicalIndex, true);
+            });
+
+            const resizeObserver = new ResizeObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.target === bottomIsland) {
+                        document.documentElement.style.setProperty(
+                            '--bottom-island-height',
+                            `${Math.ceil(bottomIsland.getBoundingClientRect().height)}px`
+                        );
+                    }
+                });
+                measureAndCenter();
+            });
+            resizeObserver.observe(bottomIsland);
+            resizeObserver.observe(productStage);
+
+            measureAndCenter();
+
+            return {
+                center,
+                focus(index) {
+                    options[middlePhysicalIndex(index)]?.focus({ preventScroll: true });
+                },
+                directionTo(index) {
+                    return Math.sign(nearestPhysicalIndex(index) - closestPhysicalIndex());
+                },
+                refresh: measureAndCenter,
+                setSelected,
+                afterCenter(callback) {
+                    afterCenterCallback = callback;
+                },
+                status: wheelStatus
+            };
+        }
+
+        function setupEventListeners() {
+            canvas.addEventListener('touchstart', e => { cancelCardHint(); e.preventDefault(); isDragging = true; startX = e.touches[0].clientX; }, { passive: false });
+            canvas.addEventListener('touchmove', e => { if (!isDragging) return; e.preventDefault(); targetRotationY = lastRotationY + (e.touches[0].clientX - startX) * 0.5; checkFlip(); }, { passive: false });
+            canvas.addEventListener('touchend', () => { isDragging = false; snapToPosition(); });
+            
+            canvas.addEventListener('mousedown', e => { cancelCardHint(); isDragging = true; startX = e.clientX; });
+            canvas.addEventListener('mousemove', e => { if (!isDragging) return; targetRotationY = lastRotationY + (e.clientX - startX) * 0.5; checkFlip(); });
+            canvas.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; snapToPosition(); } });
+            canvas.addEventListener('mouseleave', () => { if (isDragging) { isDragging = false; snapToPosition(); } });
+            canvas.addEventListener('keydown', handleCardKeydown);
+            
+            window.addEventListener('resize', handleWindowResize);
+
+            const carousel = document.getElementById('design-carousel');
+            carousel.querySelectorAll('.design-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    if (suppressCarouselClick) return;
+                    cancelCardHint();
+                    selectCarouselItem(Number(option.dataset.designIndex));
+                });
+            });
+            carousel.addEventListener('scroll', handleCarouselScroll, { passive: true });
+            carousel.addEventListener('touchstart', handleCarouselTouchStart, { passive: true });
+            carousel.addEventListener('touchmove', handleCarouselTouchMove, { passive: true });
+            carousel.addEventListener('touchend', handleCarouselTouchEnd, { passive: true });
+            carousel.addEventListener('touchcancel', handleCarouselTouchEnd, { passive: true });
+            carousel.addEventListener('wheel', cancelProgrammaticCarouselScroll, { passive: true });
+            if ('onscrollend' in carousel) carousel.addEventListener('scrollend', handleCarouselScrollEnd);
+            carousel.addEventListener('keydown', handleCarouselKeydown);
+            setupCarouselPointerDrag(carousel);
+
+            if (isVerticalWheelPreview) {
+                verticalWheelController = setupVerticalWheelPreview();
+            }
+
+            const viewToggle = document.getElementById('carousel-view-toggle');
+            viewToggle.querySelectorAll('[data-carousel-view]').forEach(button => {
+                button.addEventListener('click', () => setCarouselView(button.dataset.carouselView));
+            });
+            viewToggle.addEventListener('keydown', handleCarouselViewKeydown);
+
+            const cardTab = document.getElementById('tab-card');
+            const stickerTab = document.getElementById('tab-sticker');
+            cardTab.addEventListener('click', () => { cancelCardHint(); switchMode('card'); });
+            stickerTab.addEventListener('click', () => { cancelCardHint(); switchMode('sticker'); });
+            cardTab.addEventListener('keydown', handleTabKeydown);
+            stickerTab.addEventListener('keydown', handleTabKeydown);
+        }
+
+        function resizeCardCanvas() {
+            if (!canvas || !gl || !projectionMatrix) return;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            if (width <= 0 || height <= 0) return;
+
+            const dpr = Math.min(window.devicePixelRatio, 2);
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            mat4.perspective(projectionMatrix, 45 * Math.PI / 180, width / height, 0.1, 100);
+        }
+
+        function handleWindowResize() {
+            resizeCardCanvas();
+            if (!isVerticalWheelPreview) renderStickerScene(stickerSceneProgress);
+            requestAnimationFrame(() => {
+                if (verticalWheelController) verticalWheelController.refresh();
+                else centerCarouselItem(currentCarouselIndex);
+            });
+        }
+
+        function checkFlip() {
+            const angle = Math.abs(targetRotationY % 360);
+            const newBack = angle > 90 && angle < 270;
+            if (newBack !== isShowingBack) {
+                isShowingBack = newBack;
+                updateCardAccessibility();
+                haptic(10);
+            }
+        }
+
+        function snapToPosition() {
+            const snapped = Math.round(targetRotationY / 180) * 180;
+            targetRotationY = snapped;
+            lastRotationY = snapped;
+        }
+
+        function updateCardAccessibility() {
+            if (!canvas) return;
+            canvas.setAttribute('aria-pressed', String(isShowingBack));
+            canvas.setAttribute('aria-label', isShowingBack ? 'Показать лицевую сторону карты' : 'Показать оборот карты');
+        }
+
+        function resetCardOrientation() {
+            rotationY = 0;
+            targetRotationY = 0;
+            lastRotationY = 0;
+            isShowingBack = false;
+            updateCardAccessibility();
+        }
+
+        function toggleCardSide() {
+            targetRotationY = lastRotationY + 180;
+            lastRotationY = targetRotationY;
+            checkFlip();
+        }
+
+        function handleCardKeydown(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            cancelCardHint();
+            toggleCardSide();
+        }
+        
+        let currentMode = 'card'; // 'card' or 'sticker'
+        let currentSticker = 0;
+
+        const stickers = [
+            { src: '../images/Pay_sticker_old.png', bg: 'sticker-0', themeColor: '#5A3C82', carrier: 'purple', phone: '../images/Phone_back_empty.png' },
+            { src: '../images/Pay_sticker.png', bg: 'sticker-1', themeColor: '#D2C0E0', carrier: 'pearl', phone: '../images/Phone_back_empty.png' }
+        ];
+
+        const carouselItems = [
+            { mode: 'card', localIndex: 0, label: 'Карта, серебряный дизайн' },
+            { mode: 'card', localIndex: 1, label: 'Карта, красный дизайн' },
+            { mode: 'card', localIndex: 2, label: 'Карта, чёрный дизайн' },
+            { mode: 'card', localIndex: 3, label: 'Карта, жёлтый дизайн' },
+            { mode: 'card', localIndex: 4, label: 'Карта, оранжевый дизайн' },
+            { mode: 'card', localIndex: 5, label: 'Карта, белый дизайн' },
+            { mode: 'card', localIndex: 6, label: 'Карта, розовый дизайн' },
+            { mode: 'sticker', localIndex: 0, label: 'Стикер, фиолетовый дизайн' },
+            { mode: 'sticker', localIndex: 1, label: 'Стикер, перламутровый дизайн' }
+        ];
+
+        let currentCarouselIndex = 0;
+        let carouselScrollTimer = null;
+        let programmaticCarouselTimer = null;
+        let programmaticCarouselScroll = false;
+        let carouselInteractionActive = false;
+        let carouselTouchStartX = 0;
+        let carouselTouchMoved = false;
+        let suppressCarouselClick = false;
+        let carouselView = 'thumbnails';
+
+        const STICKER_SCENE = {
+            duration: 820,
+            resetDuration: 200,
+            contactProgress: 0.8
+        };
+
+        let stickerInteractState = 'in-card';
+        let stickerSceneProgress = 0;
+        let stickerAnimFrame = null;
+        let stickerSceneTimer = null;
+        let stickerAutoplayFrame = null;
+        let stickerAutoplayToken = 0;
+        let cardShakeFrame = null;
+        let cardHintFrame = null;
+        let cardHintTimer = null;
+
+        function switchMode(mode) {
+            const targetIndex = mode === 'card' ? currentSkin : skins.length + currentSticker;
+            selectCarouselItem(targetIndex);
+        }
+
+        function setCarouselView(view, options = {}) {
+            if (view !== 'colors' && view !== 'thumbnails') return;
+
+            const carousel = document.getElementById('design-carousel');
+            const viewChanged = carouselView !== view;
+            carouselView = view;
+            if (viewChanged) {
+                clearTimeout(carouselScrollTimer);
+                clearTimeout(programmaticCarouselTimer);
+                programmaticCarouselScroll = true;
+            }
+
+            carousel.dataset.view = view;
+            document.getElementById('design-carousel-shell').dataset.view = view;
+
+            document.querySelectorAll('[data-carousel-view]').forEach(button => {
+                const selected = button.dataset.carouselView === view;
+                button.classList.toggle('active', selected);
+                button.setAttribute('aria-pressed', String(selected));
+                button.tabIndex = selected ? 0 : -1;
+            });
+
+            if (viewChanged) {
+                requestAnimationFrame(() => {
+                    const activeOption = carousel.querySelector(`[data-design-index="${currentCarouselIndex}"]`);
+                    if (activeOption && carousel.scrollWidth > carousel.clientWidth + 1) {
+                        activeOption.scrollIntoView({
+                            behavior: 'auto',
+                            block: 'nearest',
+                            inline: 'center'
+                        });
+                    }
+                    programmaticCarouselTimer = setTimeout(() => {
+                        programmaticCarouselScroll = false;
+                    }, 120);
+                });
+            }
+
+            if (options.focus) {
+                document.querySelector(`[data-carousel-view="${view}"]`)?.focus();
+            }
+        }
+
+        function handleCarouselViewKeydown(event) {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+
+            let nextView;
+            if (event.key === 'Home' || event.key === 'ArrowLeft') nextView = 'colors';
+            else nextView = 'thumbnails';
+            setCarouselView(nextView, { focus: true });
+        }
+
+        function updateModePresentation(mode) {
+            const wasSticker = currentMode === 'sticker';
+            currentMode = mode;
+
+            const cardTab = document.getElementById('tab-card');
+            const stickerTab = document.getElementById('tab-sticker');
+            const isCard = mode === 'card';
+
+            cardTab.classList.toggle('active', isCard);
+            stickerTab.classList.toggle('active', !isCard);
+            cardTab.setAttribute('aria-selected', String(isCard));
+            stickerTab.setAttribute('aria-selected', String(!isCard));
+            cardTab.tabIndex = isCard ? 0 : -1;
+            stickerTab.tabIndex = isCard ? -1 : 0;
+
+            const cardArea = document.getElementById('card-area');
+            const stickerArea = document.getElementById('sticker-area');
+
+            if (isCard) {
+                if (wasSticker && !isVerticalWheelPreview) resetStickerInteraction();
+                cardArea.classList.remove('hidden');
+                stickerArea.classList.remove('visible');
+                cardArea.setAttribute('aria-hidden', 'false');
+                stickerArea.setAttribute('aria-hidden', 'true');
+                document.getElementById('bottom-title').textContent = 'Карта';
+                document.getElementById('order-button').setAttribute('aria-label', 'Заказать карту бесплатно');
+                requestAnimationFrame(resizeCardCanvas);
+            } else {
+                cardArea.classList.add('hidden');
+                stickerArea.classList.toggle('visible', !isVerticalWheelPreview);
+                cardArea.setAttribute('aria-hidden', 'true');
+                stickerArea.setAttribute('aria-hidden', String(isVerticalWheelPreview));
+                document.getElementById('bottom-title').textContent = 'Стикер';
+                document.getElementById('order-button').setAttribute('aria-label', 'Заказать стикер бесплатно');
+                if (!isVerticalWheelPreview) {
+                    requestAnimationFrame(() => renderStickerScene(stickerSceneProgress));
+                }
+            }
+        }
+
+        function selectCarouselItem(index, options = {}) {
+            const nextIndex = Math.max(0, Math.min(carouselItems.length - 1, index));
+            const item = carouselItems[nextIndex];
+            const previousIndex = currentCarouselIndex;
+            const previousMode = currentMode;
+            const changed = nextIndex !== currentCarouselIndex;
+            const direction = options.direction
+                ?? verticalWheelController?.directionTo(nextIndex)
+                ?? (nextIndex > previousIndex ? 1 : -1);
+            const enteringCard = item.mode === 'card' && previousMode === 'sticker';
+            const cardDesignChanged = item.mode === 'card'
+                && (previousMode !== 'card' || item.localIndex !== currentSkin);
+            const enteringSticker = item.mode === 'sticker'
+                && (previousMode !== 'sticker' || changed);
+            currentCarouselIndex = nextIndex;
+
+            if (changed) cancelCardHint();
+
+            updateModePresentation(item.mode);
+            if (item.mode === 'card') {
+                if (isVerticalWheelPreview) {
+                    cancelCardShake();
+                    if (cardDesignChanged) resetCardOrientation();
+                }
+                selectSkin(item.localIndex, {
+                    forceShake: enteringCard,
+                    direction,
+                    suppressShake: isVerticalWheelPreview
+                });
+            } else {
+                selectSticker(item.localIndex);
+                if (enteringSticker && !isVerticalWheelPreview) {
+                    scheduleStickerLanding(item.localIndex);
+                }
+            }
+
+            document.querySelectorAll('.design-option').forEach((option, optionIndex) => {
+                const selected = optionIndex === nextIndex;
+                option.classList.toggle('selected', selected);
+                option.setAttribute('aria-selected', String(selected));
+                option.tabIndex = selected ? 0 : -1;
+            });
+            verticalWheelController?.setSelected(nextIndex);
+
+            if (changed && options.announce !== false) {
+                const message = `${item.label}, ${nextIndex + 1} из ${carouselItems.length}`;
+                const status = verticalWheelController?.status
+                    || document.getElementById('carousel-status');
+                status.textContent = message;
+            }
+            if (options.scroll !== false) {
+                clearTimeout(carouselScrollTimer);
+                if (verticalWheelController) verticalWheelController.center(nextIndex);
+                else centerCarouselItem(nextIndex);
+            }
+            if (options.focus) {
+                if (verticalWheelController) verticalWheelController.focus(nextIndex);
+                else {
+                    const activeOption = document.querySelector(`.design-option[data-design-index="${nextIndex}"]`);
+                    activeOption?.focus({ preventScroll: true });
+                }
+            }
+        }
+
+        function centerCarouselItem(index) {
+            const carousel = document.getElementById('design-carousel');
+            if (carousel.scrollWidth <= carousel.clientWidth + 1) return;
+
+            const option = carousel.querySelector(`[data-design-index="${index}"]`);
+            if (!option) return;
+
+            const carouselRect = carousel.getBoundingClientRect();
+            const optionRect = option.getBoundingClientRect();
+            const centerDelta = optionRect.left + optionRect.width / 2 - (carouselRect.left + carouselRect.width / 2);
+            if (Math.abs(centerDelta) < 1) return;
+
+            programmaticCarouselScroll = true;
+            clearTimeout(programmaticCarouselTimer);
+            option.scrollIntoView({
+                behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+            programmaticCarouselTimer = setTimeout(() => {
+                programmaticCarouselScroll = false;
+            }, prefersReducedMotion ? 20 : 450);
+        }
+
+        function cancelProgrammaticCarouselScroll() {
+            programmaticCarouselScroll = false;
+            clearTimeout(programmaticCarouselTimer);
+        }
+
+        function handleCarouselTouchStart(event) {
+            cancelCardHint();
+            cancelProgrammaticCarouselScroll();
+            carouselInteractionActive = true;
+            carouselTouchStartX = event.touches[0]?.clientX ?? 0;
+            carouselTouchMoved = false;
+            clearTimeout(carouselScrollTimer);
+        }
+
+        function handleCarouselTouchMove(event) {
+            const clientX = event.touches[0]?.clientX;
+            if (clientX !== undefined && Math.abs(clientX - carouselTouchStartX) > 6) {
+                carouselTouchMoved = true;
+            }
+        }
+
+        function handleCarouselTouchEnd() {
+            carouselInteractionActive = false;
+            if (carouselTouchMoved) {
+                suppressCarouselClick = true;
+                setTimeout(() => { suppressCarouselClick = false; }, 400);
+            }
+            scheduleCarouselSelection(100);
+        }
+
+        function closestCarouselIndex() {
+            const carousel = document.getElementById('design-carousel');
+            const center = carousel.getBoundingClientRect().left + carousel.clientWidth / 2;
+            let closestIndex = currentCarouselIndex;
+            let closestDistance = Infinity;
+
+            carousel.querySelectorAll('.design-option').forEach((option, index) => {
+                const rect = option.getBoundingClientRect();
+                const distance = Math.abs(rect.left + rect.width / 2 - center);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestIndex = index;
+                }
+            });
+            return closestIndex;
+        }
+
+        function handleCarouselScroll() {
+            const carousel = document.getElementById('design-carousel');
+            if (programmaticCarouselScroll || carouselInteractionActive || carousel.scrollWidth <= carousel.clientWidth + 1) return;
+
+            scheduleCarouselSelection(90);
+        }
+
+        function handleCarouselScrollEnd() {
+            if (programmaticCarouselScroll) {
+                cancelProgrammaticCarouselScroll();
+                return;
+            }
+            if (!carouselInteractionActive) selectCarouselItem(closestCarouselIndex(), { scroll: false });
+        }
+
+        function scheduleCarouselSelection(delay) {
+            clearTimeout(carouselScrollTimer);
+            carouselScrollTimer = setTimeout(() => {
+                if (programmaticCarouselScroll || carouselInteractionActive) return;
+                selectCarouselItem(closestCarouselIndex(), { scroll: false });
+            }, delay);
+        }
+
+        function setupCarouselPointerDrag(carousel) {
+            let pointerId = null;
+            let startX = 0;
+            let startScrollLeft = 0;
+            let moved = false;
+
+            carousel.addEventListener('pointerdown', event => {
+                if (event.pointerType !== 'mouse' || event.button !== 0 || carousel.scrollWidth <= carousel.clientWidth + 1) return;
+                cancelCardHint();
+                cancelProgrammaticCarouselScroll();
+                pointerId = event.pointerId;
+                startX = event.clientX;
+                startScrollLeft = carousel.scrollLeft;
+                moved = false;
+                carouselInteractionActive = true;
+                carousel.classList.add('dragging');
+                carousel.setPointerCapture?.(pointerId);
+            });
+
+            carousel.addEventListener('pointermove', event => {
+                if (event.pointerId !== pointerId) return;
+                const delta = event.clientX - startX;
+                if (Math.abs(delta) > 4) moved = true;
+                carousel.scrollLeft = startScrollLeft - delta;
+            });
+
+            const finishDrag = event => {
+                if (event.pointerId !== pointerId) return;
+                carousel.releasePointerCapture?.(pointerId);
+                pointerId = null;
+                carouselInteractionActive = false;
+                carousel.classList.remove('dragging');
+                if (!moved) return;
+
+                suppressCarouselClick = true;
+                const closestIndex = closestCarouselIndex();
+                selectCarouselItem(closestIndex);
+                setTimeout(() => { suppressCarouselClick = false; }, 0);
+            };
+
+            carousel.addEventListener('pointerup', finishDrag);
+            carousel.addEventListener('pointercancel', finishDrag);
+        }
+
+        function handleCarouselKeydown(event) {
+            let nextIndex = currentCarouselIndex;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex += 1;
+            else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex -= 1;
+            else if (event.key === 'Home') nextIndex = 0;
+            else if (event.key === 'End') nextIndex = carouselItems.length - 1;
+            else return;
+
+            event.preventDefault();
+            cancelCardHint();
+            selectCarouselItem(nextIndex, { focus: true });
+        }
+
+        function handleTabKeydown(event) {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            cancelCardHint();
+            let mode;
+            if (event.key === 'Home') mode = 'card';
+            else if (event.key === 'End') mode = 'sticker';
+            else mode = event.currentTarget.id === 'tab-card' ? 'sticker' : 'card';
+            switchMode(mode);
+            requestAnimationFrame(() => document.getElementById(`tab-${mode}`).focus());
+        }
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5
+                ? 4 * t * t * t
+                : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function clamp01(value) {
+            return Math.max(0, Math.min(1, value));
+        }
+
+        function stickerPhase(progress, start, end) {
+            return clamp01((progress - start) / (end - start));
+        }
+
+        function mix(start, end, progress) {
+            return start + (end - start) * progress;
+        }
+
+        function renderStickerScene(progress) {
+            const stage = document.getElementById('sticker-stage');
+            const carrier = document.getElementById('sticker-carrier');
+            const sticker = document.getElementById('sticker-float');
+            const phone = document.getElementById('sticker-phone');
+            if (!stage || !carrier || !sticker || !phone) return;
+
+            const p = clamp01(progress);
+            stickerSceneProgress = p;
+
+            const compact = (stage.clientHeight || 280) <= 230;
+            const stageHeight = stage.clientHeight || 280;
+            const stageStyles = getComputedStyle(stage);
+            const anchorRatio = 0.5;
+            const detach = easeOutCubic(stickerPhase(p, 0, 0.17));
+            const clearSlot = easeOutCubic(stickerPhase(p, 0.08, 0.34));
+            const travel = easeInOutCubic(stickerPhase(p, 0.2, 0.82));
+            const turn = easeInOutCubic(stickerPhase(p, 0.16, 0.76));
+            const carrierExit = easeOutCubic(stickerPhase(p, 0.18, 0.66));
+            const carrierFade = easeOutCubic(stickerPhase(p, 0.42, 0.7));
+            const phoneIn = easeOutCubic(stickerPhase(p, 0.4, 0.78));
+            const contact = easeOutCubic(stickerPhase(p, STICKER_SCENE.contactProgress, 1));
+            const arc = Math.sin(Math.PI * travel);
+
+            const finalY = stageHeight * (compact ? 0.61 : 0.59) - stageHeight * anchorRatio;
+            const startX = parseFloat(stageStyles.getPropertyValue('--sticker-anchor-x'))
+                || -(carrier.clientWidth || 258) * 0.292;
+            const stickerX = mix(startX, 0, travel)
+                - 12 * clearSlot * (1 - travel)
+                + 9 * arc;
+            const stickerY = mix(0, finalY, travel)
+                - 7 * detach * (1 - travel)
+                - 20 * arc;
+            const stickerRotation = mix(-90, 0, turn);
+
+            let contactScale = 0;
+            if (contact <= 0) {
+                contactScale = 0;
+            } else if (contact < 0.34) {
+                contactScale = mix(0, 0.028, contact / 0.34);
+            } else if (contact < 0.7) {
+                contactScale = mix(0.028, -0.009, (contact - 0.34) / 0.36);
+            } else if (contact <= 1) {
+                contactScale = mix(-0.009, 0, (contact - 0.7) / 0.3);
+            }
+
+            const landedScale = parseFloat(stageStyles.getPropertyValue('--sticker-landed-scale')) || 1.246;
+            const stickerScale = mix(1, landedScale, travel)
+                + 0.03 * detach * (1 - travel)
+                + contactScale;
+            const baseObjectWidth = parseFloat(stageStyles.getPropertyValue('--sticker-base-w')) || 130;
+            const responsiveDepth = baseObjectWidth / 130;
+            const separation = Math.max(detach * clearSlot * (1 - travel), arc) * (1 - contact);
+            const shadowLift = easeOutCubic(clamp01(separation));
+            const shadowY = 10 * shadowLift * responsiveDepth;
+            const shadowBlur = 16 * shadowLift * responsiveDepth;
+            const shadowAlpha = 0.22 * shadowLift;
+            const elevation = 12 * shadowLift * responsiveDepth;
+
+            sticker.style.transform = `translate(-50%, -50%) translate3d(${stickerX}px, ${stickerY}px, ${elevation}px) rotateZ(${stickerRotation}deg) scale(${stickerScale})`;
+            sticker.style.filter = shadowAlpha < 0.002
+                ? 'none'
+                : `drop-shadow(0 ${shadowY}px ${shadowBlur}px rgba(25, 20, 39, ${shadowAlpha}))`;
+            sticker.style.opacity = '1';
+
+            const carrierDip = 2 * detach * (1 - carrierExit);
+            carrier.style.transform = `translate(-50%, -50%) translate(${-58 * carrierExit}px, ${carrierDip + 34 * carrierExit}px) rotateZ(${-5 * carrierExit}deg) rotateX(${2.5 * detach * (1 - carrierExit)}deg) scale(${1 - 0.012 * detach - 0.075 * carrierExit})`;
+            carrier.style.opacity = String(1 - carrierFade);
+            carrier.style.filter = 'none';
+
+            const phoneStartY = stageHeight <= 180 ? 158 : compact ? 190 : 215;
+            const phoneReaction = 2 * Math.sin(Math.PI * contact);
+            phone.style.transform = `translateX(-50%) translateY(${phoneStartY * (1 - phoneIn) - phoneReaction}px) scale(${mix(0.92, 1, phoneIn)})`;
+            phone.style.opacity = String(0.08 + 0.92 * phoneIn);
+            phone.style.filter = phoneIn < 0.99 ? `blur(${8 * (1 - phoneIn)}px)` : 'none';
+        }
+
+        function cancelStickerMotion() {
+            if (stickerAnimFrame) cancelAnimationFrame(stickerAnimFrame);
+            if (stickerSceneTimer) clearTimeout(stickerSceneTimer);
+            stickerAnimFrame = null;
+            stickerSceneTimer = null;
+        }
+
+        function cancelStickerAutoplay() {
+            stickerAutoplayToken += 1;
+            if (stickerAutoplayFrame) cancelAnimationFrame(stickerAutoplayFrame);
+            stickerAutoplayFrame = null;
+        }
+
+        function scheduleStickerLanding(targetSticker) {
+            cancelStickerAutoplay();
+            const token = stickerAutoplayToken;
+            const stickerImage = document.getElementById('sticker-img');
+            const phoneImage = document.getElementById('sticker-phone');
+
+            const startWhenVisible = () => {
+                if (token !== stickerAutoplayToken) return;
+                stickerAutoplayFrame = requestAnimationFrame(() => {
+                    stickerAutoplayFrame = null;
+                    if (
+                        token === stickerAutoplayToken
+                        && currentMode === 'sticker'
+                        && currentSticker === targetSticker
+                        && stickerInteractState === 'in-card'
+                        && stickerSceneProgress === 0
+                    ) {
+                        playStickerLanding();
+                    }
+                });
+            };
+
+            const whenImageReady = image => {
+                if (image.complete && image.naturalWidth > 0) return Promise.resolve();
+                if (typeof image.decode === 'function') return image.decode().catch(() => {});
+                return new Promise(resolve => image.addEventListener('load', resolve, { once: true }));
+            };
+
+            Promise.all([
+                whenImageReady(stickerImage),
+                whenImageReady(phoneImage)
+            ]).then(startWhenVisible);
+        }
+
+        function setStickerState(nextState) {
+            stickerInteractState = nextState;
+            const stage = document.getElementById('sticker-stage');
+            if (stage) stage.dataset.state = nextState;
+            updateStickerAccessibility();
+        }
+
+        function updateStickerAccessibility() {
+            const stage = document.getElementById('sticker-stage');
+            if (!stage) return;
+
+            const isLanded = stickerInteractState === 'on-phone';
+            const isBusy = stickerInteractState === 'animating' || stickerInteractState === 'resetting';
+            stage.setAttribute('aria-pressed', String(isLanded));
+            stage.setAttribute('aria-busy', String(isBusy));
+            stage.setAttribute(
+                'aria-label',
+                isLanded
+                    ? 'Повторить анимацию приклеивания стикера'
+                    : 'Достать стикер из пластиковой карты и приклеить на телефон'
+            );
+        }
+
+        function resetStickerInteraction(options = {}) {
+            cancelStickerAutoplay();
+            cancelStickerMotion();
+            const stage = document.getElementById('sticker-stage');
+            stage?.classList.remove('is-resetting');
+            stickerSceneProgress = 0;
+            renderStickerScene(0);
+            setStickerState('in-card');
+            document.getElementById('sticker-status').textContent = options.announce
+                ? 'Стикер снова в пластиковой карте'
+                : '';
+        }
+
+        function snapStickerOnPhone(announce = true) {
+            cancelStickerMotion();
+            stickerSceneProgress = 1;
+            renderStickerScene(1);
+            setStickerState('on-phone');
+            if (announce) {
+                document.getElementById('sticker-status').textContent = 'Стикер приклеен к телефону';
+            }
+        }
+
+        function crossfadeStickerScene(targetProgress, nextState, message, duration, onComplete = () => {}) {
+            cancelStickerMotion();
+
+            const stage = document.getElementById('sticker-stage');
+            const halfDuration = duration / 2;
+            setStickerState('resetting');
+            stage?.classList.add('is-resetting');
+
+            stickerSceneTimer = setTimeout(() => {
+                stickerSceneProgress = targetProgress;
+                renderStickerScene(targetProgress);
+
+                requestAnimationFrame(() => {
+                    stage?.classList.remove('is-resetting');
+                });
+
+                stickerSceneTimer = setTimeout(() => {
+                    stickerSceneTimer = null;
+                    setStickerState(nextState);
+                    document.getElementById('sticker-status').textContent = message;
+                    onComplete();
+                }, halfDuration);
+            }, halfDuration);
+        }
+
+        function animateStickerProgress(targetProgress, duration, onComplete) {
+            cancelStickerMotion();
+
+            const startProgress = stickerSceneProgress;
+            const movingForward = targetProgress > startProgress;
+            const startTime = performance.now();
+            let contactPlayed = startProgress >= STICKER_SCENE.contactProgress;
+            setStickerState('animating');
+
+            function frame(now) {
+                const elapsed = clamp01((now - startTime) / duration);
+                const timing = movingForward ? elapsed : easeOutCubic(elapsed);
+                const nextProgress = mix(startProgress, targetProgress, timing);
+                renderStickerScene(nextProgress);
+
+                if (
+                    movingForward
+                    && !contactPlayed
+                    && nextProgress >= STICKER_SCENE.contactProgress
+                ) {
+                    contactPlayed = true;
+                    haptic(9);
+                }
+
+                if (elapsed < 1) {
+                    stickerAnimFrame = requestAnimationFrame(frame);
+                } else {
+                    stickerAnimFrame = null;
+                    onComplete();
+                }
+            }
+
+            stickerAnimFrame = requestAnimationFrame(frame);
+        }
+
+        function playStickerLanding() {
+            if (stickerInteractState === 'animating' || stickerInteractState === 'resetting') return;
+
+            if (prefersReducedMotion) {
+                crossfadeStickerScene(1, 'on-phone', 'Стикер приклеен к телефону', 120);
+                return;
+            }
+
+            const remainingDuration = Math.max(
+                260,
+                STICKER_SCENE.duration * (1 - stickerSceneProgress)
+            );
+            animateStickerProgress(1, remainingDuration, () => snapStickerOnPhone(true));
+        }
+
+        function replayStickerLanding() {
+            if (stickerInteractState !== 'on-phone') return;
+            crossfadeStickerScene(
+                0,
+                'in-card',
+                '',
+                prefersReducedMotion ? 100 : STICKER_SCENE.resetDuration,
+                () => requestAnimationFrame(playStickerLanding)
+            );
+        }
+
+        function handleStickerKeydown(event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            if (stickerInteractState === 'animating' || stickerInteractState === 'resetting') return;
+            event.preventDefault();
+            if (stickerInteractState === 'on-phone') replayStickerLanding();
+            else playStickerLanding();
+        }
+
+        function setupStickerInteraction() {
+            const stage = document.getElementById('sticker-stage');
+            if (!stage) return;
+
+            stage.addEventListener('click', () => {
+                if (stickerInteractState === 'animating' || stickerInteractState === 'resetting') return;
+                if (stickerInteractState === 'on-phone') replayStickerLanding();
+                else playStickerLanding();
+            });
+            stage.addEventListener('keydown', handleStickerKeydown);
+        }
+
+        function selectSticker(index) {
+            const changed = currentSticker !== index;
+            currentSticker = index;
+
+            if (isVerticalWheelPreview) {
+                /* The wheel variant shows the original flat sticker artwork only. */
+                selectSkin(currentSkin);
+                return;
+            }
+
+            const s = stickers[index];
+            const stickerImage = document.getElementById('sticker-img');
+            const carrier = document.getElementById('sticker-carrier');
+            const stage = document.getElementById('sticker-stage');
+
+            carrier.dataset.variant = s.carrier;
+            stage.dataset.variant = s.carrier;
+
+            if (changed) {
+                stickerImage.src = s.src;
+                document.getElementById('sticker-phone').src = s.phone;
+                resetStickerInteraction();
+            }
+
+            /* Stickers continue the same visual scene as the cards. */
+            selectSkin(currentSkin);
+        }
+        
+        function selectSkin(index, options = {}) {
+            const changed = currentSkin !== index;
+            const dir = options.direction ?? (index > currentSkin ? 1 : -1);
+            currentSkin = index;
+            const video = document.getElementById('bg-video');
+            if (!prefersReducedMotion && video.paused) video.play().catch(() => {});
+            if (changed) {
+                updateTextures();
+                updateCardGeometry(index);
+            }
+            if ((changed || options.forceShake) && !options.suppressShake) {
+                haptic(5);
+                shakeCard(dir);
+            }
+        }
+        
+        function cancelCardShake() {
+            if (cardShakeFrame) cancelAnimationFrame(cardShakeFrame);
+            cardShakeFrame = null;
+            shakeOffset.x = 0;
+            shakeOffset.y = 0;
+        }
+
+        function cancelCardHint() {
+            if (cardHintTimer) clearTimeout(cardHintTimer);
+            if (cardHintFrame) cancelAnimationFrame(cardHintFrame);
+            cardHintTimer = null;
+            cardHintFrame = null;
+            hintRotationY = 0;
+        }
+
+        function shakeCard(direction = -1) {
+            cancelCardHint();
+            cancelCardShake();
+            if (prefersReducedMotion) return;
+
+            const duration = 290;
+            const firstTurnEnd = 70;
+            const counterTurnEnd = 175;
+            const primaryAngle = 3.2 * direction;
+            const counterAngle = -1 * direction;
+            const startTime = performance.now();
+            
+            function animate(time) {
+                const elapsed = Math.min(duration, time - startTime);
+                let angle;
+
+                if (elapsed <= firstTurnEnd) {
+                    angle = mix(0, primaryAngle, easeOutCubic(elapsed / firstTurnEnd));
+                } else if (elapsed <= counterTurnEnd) {
+                    angle = mix(
+                        primaryAngle,
+                        counterAngle,
+                        easeInOutCubic((elapsed - firstTurnEnd) / (counterTurnEnd - firstTurnEnd))
+                    );
+                } else {
+                    angle = mix(
+                        counterAngle,
+                        0,
+                        easeOutCubic((elapsed - counterTurnEnd) / (duration - counterTurnEnd))
+                    );
+                }
+
+                shakeOffset.x = 0;
+                shakeOffset.y = angle * Math.PI / 180;
+
+                if (elapsed < duration) {
+                    cardShakeFrame = requestAnimationFrame(animate);
+                } else {
+                    cancelCardShake();
+                }
+            }
+            cardShakeFrame = requestAnimationFrame(animate);
+        }
+        
+        // Initial hint animation - rotate Y axis to show card is interactive
+        function playHintAnimation() {
+            cancelCardHint();
+            if (prefersReducedMotion) return;
+            const duration = 1200; // ms
+            const maxAngle = 35 * Math.PI / 180; // 35 degrees in radians
+            let startTime = null;
+            
+            function animate(time) {
+                if (startTime === null) startTime = time; // Set start time on first frame
+                const elapsed = time - startTime;
+                const progress = elapsed / duration;
+                
+                if (progress < 1) {
+                    // Smooth out-and-back using sine wave
+                    hintRotationY = maxAngle * Math.sin(progress * Math.PI);
+                    cardHintFrame = requestAnimationFrame(animate);
+                } else {
+                    hintRotationY = 0;
+                    cardHintFrame = null;
+                }
+            }
+            
+            // Start after a small delay so user sees the card first
+            cardHintTimer = setTimeout(() => {
+                cardHintTimer = null;
+                cardHintFrame = requestAnimationFrame(animate);
+            }, 600);
+        }
+            
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentMode === 'card' && !verticalWheelScrolling) render();
+        }
+        
+        // Start
+        init();
+        if (!isVerticalWheelPreview) {
+            setupStickerInteraction();
+            resetStickerInteraction();
+        }
+        selectCarouselItem(0, { scroll: false, announce: false });
+        if (!isVerticalWheelPreview) playHintAnimation();
+    </script>
+</body>
+</html>
